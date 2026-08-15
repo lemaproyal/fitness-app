@@ -472,7 +472,8 @@ async function importDatei(datei) {
     const ergebnis = await importieren(JSON.parse(await datei.text()));
     $("dlgMehr").close();
     await neuLaden();
-    melden(`${ergebnis.uebungen} Übungen und ${ergebnis.workouts} Workouts importiert.`);
+    melden(`${ergebnis.uebungen} Übungen, ${ergebnis.videos} Videos importiert.`
+      + (ergebnis.ohneDatei ? ` ${ergebnis.ohneDatei} Videodatei(en) fehlen.` : ""));
   } catch (fehler) {
     melden("Import fehlgeschlagen: " + fehler.message);
   }

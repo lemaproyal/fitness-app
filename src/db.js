@@ -435,15 +435,24 @@ export async function exportieren() {
   const [alleUebungen, alleWorkouts, allesProtokoll, medienMeta] = await Promise.all([
     uebungen.alle(), workouts.alle(), protokoll.alle(), medien.uebersicht(),
   ]);
+
+  // Verlinkte Videos (YouTube und Direktlinks) sind reine Textdaten und wandern
+  // vollständig mit. Selbst hochgeladene Dateien nicht — die stecken als Blob in
+  // der Datenbank und würden base64-kodiert jede Datei sprengen.
+  const alsDatei = medienMeta.filter(m => m.quelle === "datei").length;
+
   return {
     format: "fitness-app-sicherung",
     version: DB_VERSION,
     erstelltAm: jetzt(),
-    hinweis: "Videos sind nicht enthalten und müssen separat gesichert werden.",
+    hinweis: alsDatei
+      ? `${alsDatei} selbst hochgeladene Videodatei(en) sind nicht enthalten und müssen separat gesichert werden. Verlinkte Videos sind vollständig dabei.`
+      : "Alle Videos sind verlinkt und vollständig enthalten.",
     uebungen: alleUebungen,
     workouts: alleWorkouts,
     protokoll: allesProtokoll,
-    medienMetadaten: medienMeta,
+    medien: medienMeta,
+    medienMetadaten: medienMeta, // alter Feldname, damit ältere Sicherungen lesbar bleiben
   };
 }
 
@@ -452,15 +461,42 @@ export async function importieren(sicherung, { ersetzen = false } = {}) {
     throw new Error("Unbekanntes Dateiformat.");
   }
   if (ersetzen) {
-    await transaktion(["uebungen", "workouts", "protokoll"], "readwrite",
-      async ({ uebungen: u, workouts: w, protokoll: p }) => {
-        await Promise.all([anfrage(u.clear()), anfrage(w.clear()), anfrage(p.clear())]);
+    await transaktion(["uebungen", "workouts", "protokoll", "medien"], "readwrite",
+      async ({ uebungen: u, workouts: w, protokoll: p, medien: m }) => {
+        await Promise.all([anfrage(u.clear()), anfrage(w.clear()),
+                           anfrage(p.clear()), anfrage(m.clear())]);
       });
   }
-  await uebungen.vieleSpeichern(sicherung.uebungen ?? []);
+
+  // medienId zurücksetzen: Die ids aus der Sicherung gelten hier nicht mehr.
+  // Die Verknüpfung stellt medien.speichern() gleich neu her.
+  await uebungen.vieleSpeichern((sicherung.uebungen ?? []).map(u => ({ ...u, medienId: null })));
   for (const w of sicherung.workouts ?? []) await workouts.speichern(w);
+
+  let videos = 0, ohneDatei = 0;
+  for (const m of sicherung.medien ?? sicherung.medienMetadaten ?? []) {
+    // Ohne Blob lässt sich ein Dateivideo nicht wiederherstellen — nur Links.
+    if (m.quelle === "datei" || !(m.url || m.videoId)) { ohneDatei++; continue; }
+    if (!await uebungen.nachId(m.uebungId)) continue; // Übung fehlt in der Sicherung
+    await medien.speichern({
+      uebungId: m.uebungId,
+      quelle: m.quelle,
+      url: m.url,
+      videoId: m.videoId ?? null,
+      posterUrl: m.posterUrl ?? null,
+      dauerMs: m.dauerMs ?? null,
+      breite: m.breite ?? null,
+      hoehe: m.hoehe ?? null,
+      loopStartMs: m.loopStartMs ?? 0,
+      loopEndeMs: m.loopEndeMs ?? null,
+    });
+    videos++;
+  }
+
   return {
     uebungen: (sicherung.uebungen ?? []).length,
     workouts: (sicherung.workouts ?? []).length,
+    videos,
+    ohneDatei,
   };
 }

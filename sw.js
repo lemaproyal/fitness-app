@@ -12,7 +12,7 @@
  * Sonst behalten bereits installierte Geräte den alten Stand.
  */
 
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `fitness-${VERSION}`;
 
 // Alles, was die App zum Starten braucht. Relative Pfade, damit es auch in einem
