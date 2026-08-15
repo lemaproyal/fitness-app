@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d4462a">
+<meta name="description" content="Übungskatalog und Trainingsplanung für den 2er-Split.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Fitness</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --ink: #16181d; --muted: #62676f;
+    --line: #dfe2e7; --accent: #d4462a; --chip: #eef0f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121418; --card: #1c1f25; --ink: #eceef1; --muted: #9aa1ab;
+      --line: #2c313a; --accent: #ff6b47; --chip: #262b33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: max(24px, env(safe-area-inset-top)) 16px 40px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  header img { width: 44px; height: 44px; border-radius: 11px; }
+  h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.02em; }
+  .unterzeile { color: var(--muted); font-size: 0.9rem; margin: 0 0 26px 56px; }
+
+  .kacheln { display: grid; gap: 12px; margin-bottom: 26px; }
+  a.kachel, button.kachel {
+    display: block; width: 100%; text-align: left; font: inherit; cursor: pointer;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px 18px; color: inherit; text-decoration: none;
+  }
+  a.kachel:hover { border-color: var(--accent); }
+  .kachel h2 { margin: 0 0 3px; font-size: 1.05rem; }
+  .kachel p { margin: 0; color: var(--muted); font-size: 0.88rem; }
+  .kachel[aria-disabled="true"] { opacity: 0.55; cursor: default; }
+  .kachel[aria-disabled="true"]:hover { border-color: var(--line); }
+
+  .zahlen {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 26px;
+  }
+  .zahl {
+    flex: 1 1 120px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .zahl b { display: block; font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .zahl span { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .hinweis {
+    background: var(--chip); border-radius: 12px; padding: 14px 16px;
+    font-size: 0.88rem; color: var(--muted); margin-bottom: 12px;
+  }
+  .hinweis b { color: var(--ink); }
+  .hinweis button {
+    font: inherit; margin-top: 10px; cursor: pointer;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 8px 14px; font-weight: 600;
+  }
+  footer { margin-top: 30px; font-size: 0.78rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="./icons/icon-192.png" alt="">
+    <h1>Fitness</h1>
+  </header>
+  <p class="unterzeile">2er-Split · Tag A Push und Explosiv · Tag B Pull und Beine</p>
+
+  <div class="zahlen" id="zahlen"></div>
+
+  <div class="kacheln">
+    <a class="kachel" href="./verwaltung.html">
+      <h2>Übungen verwalten</h2>
+      <p>Anlegen, bearbeiten, Videosequenz markieren</p>
+    </a>
+    <div class="kachel" aria-disabled="true">
+      <h2>Training starten</h2>
+      <p>Kommt als Nächstes — Workout zusammenstellen und Sätze protokollieren</p>
+    </div>
+  </div>
+
+  <div class="hinweis" id="installHinweis" hidden></div>
+  <div class="hinweis" id="offlineHinweis" hidden></div>
+
+  <footer>Alle Daten bleiben auf diesem Gerät. Nichts wird hochgeladen.</footer>
+</div>
+
+<script type="module" src="./src/start.js"></script>
+</body>
+</html>

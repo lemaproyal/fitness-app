@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d4462a">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Übungen verwalten</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --ink: #16181d; --muted: #62676f;
+    --line: #dfe2e7; --accent: #d4462a; --chip: #eef0f3; --feld: #fff;
+    --gut: #2f7d5e; --warn: #a8641a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121418; --card: #1c1f25; --ink: #eceef1; --muted: #9aa1ab;
+      --line: #2c313a; --accent: #ff6b47; --chip: #262b33; --feld: #14171c;
+      --gut: #4ea882; --warn: #d59a4a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: 40px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 14px; }
+
+  header {
+    position: sticky; top: 0; z-index: 20; background: var(--bg);
+    border-bottom: 1px solid var(--line); padding: 14px 0 12px; margin-bottom: 16px;
+  }
+  .kopf { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .zurueck {
+    color: var(--muted); text-decoration: none; font-size: 1.2rem; line-height: 1;
+    padding: 2px 6px; border-radius: 6px;
+  }
+  .zurueck:hover { background: var(--chip); color: var(--ink); }
+  h1 { font-size: 1.15rem; margin: 0; letter-spacing: -0.01em; }
+  .status { color: var(--muted); font-size: 0.82rem; }
+  .status b { color: var(--ink); font-weight: 600; }
+
+  .werkzeuge { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  input, select, textarea, button {
+    font: inherit; color: var(--ink); background: var(--feld);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  }
+  textarea { resize: vertical; min-height: 76px; width: 100%; line-height: 1.45; }
+  input[type=search] { flex: 1 1 180px; min-width: 0; }
+  button { background: var(--chip); border-color: transparent; cursor: pointer; }
+  button:hover { border-color: var(--line); }
+  button.haupt { background: var(--accent); color: #fff; font-weight: 600; }
+  button.leise { background: none; color: var(--muted); padding: 6px 8px; }
+  button.gefahr { color: var(--accent); background: none; }
+  label.kasten { display: flex; align-items: center; gap: 6px; font-size: 0.86rem; color: var(--muted); }
+
+  .liste { display: flex; flex-direction: column; gap: 10px; }
+  .zeile {
+    display: flex; gap: 12px; align-items: center;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .vorschau {
+    flex: 0 0 68px; height: 68px; border-radius: 8px; background: var(--chip);
+    display: grid; place-items: center; overflow: hidden; position: relative;
+  }
+  .vorschau img { width: 100%; height: 100%; object-fit: cover; }
+  .vorschau .leer { font-size: 1.4rem; opacity: 0.35; }
+  .zeile .info { flex: 1 1 auto; min-width: 0; }
+  .zeile h3 { margin: 0 0 4px; font-size: 0.98rem; font-weight: 600; }
+  .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .chip {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--chip); color: var(--muted); padding: 2px 7px; border-radius: 999px;
+  }
+  .chip.tag { color: #fff; }
+  .chip.video { color: var(--gut); }
+  .chip.kein-video { color: var(--warn); }
+  .zeile .aktionen { display: flex; gap: 2px; flex: 0 0 auto; }
+  .notiz-vorschau {
+    margin-top: 5px; font-size: 0.82rem; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; white-space: pre-wrap;
+  }
+
+  dialog {
+    border: none; border-radius: 14px; padding: 0; width: min(620px, 94vw);
+    background: var(--card); color: var(--ink); max-height: 90vh;
+    overflow: hidden; /* gescrollt wird ausschließlich der Inhaltsbereich */
+  }
+  /* Nur im geöffneten Zustand umschalten — sonst überschreibt flex das display:none. */
+  dialog[open] { display: flex; flex-direction: column; }
+  dialog > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+  dialog::backdrop { background: rgba(0,0,0,0.55); }
+  .dlg-kopf {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 18px; border-bottom: 1px solid var(--line);
+    background: var(--card); flex: 0 0 auto;
+  }
+  .dlg-kopf h2 { margin: 0; font-size: 1.02rem; }
+  /* min-height:0 ist entscheidend: ohne das weigert sich ein Flex-Kind zu schrumpfen
+     und wächst auf Inhaltshöhe, statt zu scrollen. */
+  .dlg-koerper { padding: 18px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+  .dlg-fuss {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 14px 18px; border-top: 1px solid var(--line);
+    background: var(--card); flex: 0 0 auto;
+  }
+  .feld { margin-bottom: 14px; }
+  .feld > label {
+    display: block; font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 5px;
+  }
+  .feld input:not([type=checkbox]), .feld select { width: 100%; }
+  .reihe { display: flex; gap: 10px; }
+  .reihe > .feld { flex: 1 1 0; min-width: 0; }
+  .hilfe { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+  details { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 4px; }
+  summary { cursor: pointer; font-size: 0.86rem; color: var(--muted); margin-bottom: 12px; }
+
+  .video-feld {
+    border: 1px dashed var(--line); border-radius: 10px; padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  /* Vorschau über die volle Breite im Videoformat. Hier bewusst kein opacity:
+     Das iframe von YouTube erbt die Klasse des Platzhalters, den es ersetzt. */
+  .video-feld video, .video-feld img, .video-feld iframe, .video-feld .vorschau-leer {
+    display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
+    border: none; border-radius: 8px; background: #000;
+  }
+  /* contain statt cover: bei Hochkantaufnahmen wäre sonst genau das abgeschnitten,
+     worauf es ankommt — Kopf und Füße. */
+  .video-feld video, .video-feld img { object-fit: contain; }
+  .video-feld .vorschau-leer {
+    background: var(--chip); color: var(--muted);
+    display: grid; place-items: center; font-size: 2.2rem;
+  }
+  /* Schnittleiste */
+  .schnitt {
+    position: relative; height: 34px; margin: 4px 0 10px;
+    background: var(--chip); border-radius: 7px; cursor: pointer;
+    touch-action: none; /* sonst scrollt das Handy beim Ziehen die Seite */
+    opacity: 0.5; transition: opacity 0.15s;
+  }
+  .schnitt.bereit { opacity: 1; }
+  /* Solange nichts markiert ist, zurückhaltend darstellen — es ist noch keine Auswahl. */
+  .schnitt:not(.markiert) .schnitt-auswahl { opacity: 0.12; }
+  .schnitt:not(.markiert) .schnitt-griff { opacity: 0.4; }
+  .schnitt-auswahl {
+    position: absolute; top: 0; bottom: 0; background: var(--accent);
+    opacity: 0.28; border-radius: 3px; pointer-events: none;
+  }
+  .schnitt-kopf {
+    position: absolute; top: 2px; bottom: 2px; width: 2px; left: 0;
+    background: var(--ink); opacity: 0.75; pointer-events: none; border-radius: 2px;
+  }
+  .schnitt-griff {
+    position: absolute; top: -3px; height: 40px; width: 14px;
+    margin-left: -7px; border-radius: 5px;
+    background: var(--accent); border: 2px solid var(--card);
+    cursor: ew-resize; touch-action: none;
+  }
+  .schnitt-griff::after {
+    content: ""; position: absolute; inset: 0 -9px; /* größere Trefferfläche für den Finger */
+  }
+  .schnitt-griff:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .schnitt-griff.aktiv { transform: scaleY(1.08); }
+  .schnitt-knoepfe {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .schnitt-knoepfe button { padding: 8px 14px; }
+  .schnitt-knoepfe .haupt { min-width: 84px; }
+  #btnSequenzStopp:not([disabled]) { background: var(--ink); color: var(--bg); }
+  .schnitt-zeit {
+    margin-left: auto; font-size: 0.82rem; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .schnitt-werte {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    font-size: 0.84rem; color: var(--muted);
+  }
+  .schnitt-werte label { display: flex; align-items: center; gap: 4px; }
+  .schnitt-werte input { width: 62px; padding: 5px 6px; text-align: right; }
+  .schnitt-werte b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .schnitt-werte button { margin-left: auto; }
+
+  .link-reihe { display: flex; gap: 6px; margin-top: 8px; }
+  .link-reihe input { flex: 1 1 auto; min-width: 0; }
+  .quelle-marke {
+    position: absolute; left: 4px; top: 4px; font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.05em; background: rgba(0,0,0,0.65); color: #fff;
+    padding: 1px 5px; border-radius: 4px;
+  }
+  .video-knoepfe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .video-knoepfe .hilfe { flex: 1 1 auto; margin: 0; min-width: 0; }
+
+  .leerzustand { text-align: center; color: var(--muted); padding: 48px 20px; }
+  .leerzustand p { margin: 0 0 16px; }
+  .meldung {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 16px;
+    border-radius: 999px; font-size: 0.88rem; z-index: 50;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .meldung.an { opacity: 1; }
+
+  @media (max-width: 560px) {
+    .reihe { flex-direction: column; gap: 0; }
+    .zeile .aktionen { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kopf">
+      <a href="./" class="zurueck" aria-label="Zur Startseite">←</a>
+      <h1>Übungen verwalten</h1>
+      <span class="status" id="status">lädt …</span>
+    </div>
+    <div class="werkzeuge">
+      <input type="search" id="suche" placeholder="Übung suchen …" autocomplete="off">
+      <select id="filterKategorie"><option value="">Alle Kategorien</option></select>
+      <label class="kasten"><input type="checkbox" id="filterOhneVideo"> nur ohne Video</label>
+      <button class="haupt" id="btnNeu">+ Neue Übung</button>
+      <button class="leise" id="btnMehr">⋯</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="liste" id="liste"></div>
+</div>
+
+<!-- Bearbeiten-Dialog -->
+<dialog id="dlg">
+  <form method="dialog" id="formular">
+    <div class="dlg-kopf">
+      <h2 id="dlgTitel">Neue Übung</h2>
+      <button type="button" class="leise" id="btnSchliessen">✕</button>
+    </div>
+
+    <div class="dlg-koerper">
+      <div class="feld">
+        <label for="fName">Name</label>
+        <input id="fName" required placeholder="z. B. Bankdrücken Kurzhantel">
+      </div>
+
+      <div class="reihe">
+        <div class="feld">
+          <label for="fKategorie">Kategorie</label>
+          <select id="fKategorie" required></select>
+        </div>
+        <div class="feld">
+          <label for="fLevel">Level</label>
+          <select id="fLevel"></select>
+        </div>
+      </div>
+
+      <div class="feld">
+        <label>Videosequenz</label>
+        <div class="video-feld">
+          <div id="videoVorschau" class="vorschau-leer">🎬</div>
+          <div class="video-knoepfe">
+            <span class="hilfe" id="videoInfo">Noch kein Video hinterlegt.</span>
+            <button type="button" id="btnOffline" hidden>Offline speichern</button>
+            <button type="button" class="gefahr" id="btnVideoWeg" hidden>Entfernen</button>
+          </div>
+        </div>
+        <div class="link-reihe">
+          <input type="url" id="fLink" placeholder="Link einfügen: YouTube oder direkte .mp4-Adresse">
+          <button type="button" id="btnLink">Übernehmen</button>
+        </div>
+      </div>
+
+      <div class="feld" id="loopFelder" hidden>
+        <label>Sequenz markieren</label>
+
+        <div id="markierbereich">
+          <div class="schnitt-knoepfe">
+            <button type="button" id="btnAbspielen">▶ Abspielen</button>
+            <button type="button" class="haupt" id="btnSequenzStart">Start</button>
+            <button type="button" id="btnSequenzStopp" disabled>Stopp</button>
+            <span class="schnitt-zeit" id="anzeigeZeit">0,0 s / 0,0 s</span>
+          </div>
+          <div class="schnitt" id="schnittLeiste">
+            <div class="schnitt-auswahl" id="schnittAuswahl"></div>
+            <div class="schnitt-kopf" id="schnittKopf"></div>
+            <div class="schnitt-griff" id="griffStart" tabindex="0" role="slider"
+                 aria-label="Anfang der Sequenz" aria-valuemin="0"></div>
+            <div class="schnitt-griff" id="griffEnde" tabindex="0" role="slider"
+                 aria-label="Ende der Sequenz" aria-valuemin="0"></div>
+          </div>
+          <div class="schnitt-werte">
+            <span id="wertAuswahl">ganzes Video</span>
+            <b id="wertDauer">–</b>
+            <button type="button" class="leise" id="btnGanzesVideo" hidden>neu markieren</button>
+          </div>
+        </div>
+
+        <!-- Bei YouTube gibt die Einbettung keine Abspielposition heraus. -->
+        <div class="schnitt-werte" id="youtubeFelder" hidden>
+          <label>ab <input type="number" id="fLoopStart" min="0" step="0.1" value="0"> s</label>
+          <label>bis <input type="number" id="fLoopEnde" min="0" step="0.1"> s</label>
+        </div>
+
+        <div class="hilfe" id="schnittHinweis"></div>
+      </div>
+
+      <div class="feld">
+        <label for="fNotizen">Info / Notizen</label>
+        <textarea id="fNotizen" rows="4"
+          placeholder="Eigene Anmerkungen: Gerätenummer im Studio, Sitzhöhe, was letztes Mal weh tat, Steigerungsplan …"></textarea>
+        <div class="hilfe">Freier Text, nur für dich. Erscheint beim Training direkt an der Übung.</div>
+      </div>
+
+      <details id="details">
+        <summary>Weitere Angaben (optional)</summary>
+
+        <div class="reihe">
+          <div class="feld">
+            <label for="fMesstyp">Was wird protokolliert</label>
+            <select id="fMesstyp"></select>
+          </div>
+          <div class="feld">
+            <label for="fEquipment">Equipment</label>
+            <input id="fEquipment" list="equipmentListe" placeholder="Kurzhantel, Bank">
+            <datalist id="equipmentListe"></datalist>
+          </div>
+        </div>
+
+        <div class="reihe">
+          <div class="feld"><label for="fSaetze">Sätze</label><input type="number" id="fSaetze" min="1" value="3"></div>
+          <div class="feld"><label for="fWdh">Wiederholungen</label><input type="number" id="fWdh" min="0" value="10"></div>
+          <div class="feld"><label for="fPause">Pause (Sek.)</label><input type="number" id="fPause" min="0" step="15" value="90"></div>
+        </div>
+
+        <div class="feld">
+          <label for="fMuskeln">Hauptsächlich beanspruchte Muskeln</label>
+          <input id="fMuskeln" placeholder="Brust, Trizeps, vordere Schulter">
+        </div>
+
+        <div class="feld">
+          <label for="fAusfuehrung">Ausführung</label>
+          <textarea id="fAusfuehrung" placeholder="Ein Schritt pro Zeile"></textarea>
+          <div class="hilfe">Eine Zeile pro Schritt — die App nummeriert automatisch.</div>
+        </div>
+
+        <div class="feld">
+          <label for="fHinweise">Hinweise</label>
+          <textarea id="fHinweise" placeholder="Eine Zeile pro Hinweis"></textarea>
+        </div>
+
+        <div class="feld">
+          <label for="fFehler">Typische Fehler</label>
+          <textarea id="fFehler" placeholder="Eine Zeile pro Fehler"></textarea>
+        </div>
+
+        <div class="feld">
+          <label class="kasten"><input type="checkbox" id="fUnilateral"> einseitig (pro Seite ausführen)</label>
+        </div>
+      </details>
+    </div>
+
+    <div class="dlg-fuss">
+      <button type="button" class="gefahr" id="btnLoeschen" hidden>Löschen</button>
+      <div style="flex:1"></div>
+      <button type="button" id="btnAbbrechen">Abbrechen</button>
+      <button type="submit" class="haupt">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Werkzeuge-Dialog -->
+<dialog id="dlgMehr">
+  <div class="dlg-kopf">
+    <h2>Werkzeuge</h2>
+    <button type="button" class="leise" id="btnMehrZu">✕</button>
+  </div>
+  <div class="dlg-koerper">
+    <div class="feld">
+      <label>Speicher</label>
+      <div class="hilfe" id="speicherInfo">wird geladen …</div>
+      <button type="button" id="btnPersistent" style="margin-top:8px">Dauerhaft speichern anfordern</button>
+      <div class="hilfe">Ohne diese Erlaubnis darf der Browser die Daten bei Platzmangel löschen.</div>
+    </div>
+    <div class="feld">
+      <label>Starthilfe</label>
+      <button type="button" id="btnSeed">Die 10 plyometrischen Übungen laden</button>
+      <div class="hilfe">Fügt die besprochenen Übungen mit Texten hinzu. Vorhandene Einträge bleiben unangetastet.</div>
+    </div>
+    <div class="feld">
+      <label>Sicherung</label>
+      <div class="zwei" style="display:flex; gap:6px">
+        <button type="button" id="btnExport">Exportieren</button>
+        <button type="button" id="btnImport">Importieren</button>
+      </div>
+      <input type="file" id="fImport" accept="application/json" hidden>
+      <div class="hilfe">Sichert Übungstexte und Workouts als JSON. Videos sind nicht enthalten — die liegen als Blobs in der Datenbank und müssen separat gesichert werden.</div>
+    </div>
+  </div>
+</dialog>
+
+<div class="meldung" id="meldung"></div>
+
+<script type="module" src="./src/verwaltung.js"></script>
+</body>
+</html>
