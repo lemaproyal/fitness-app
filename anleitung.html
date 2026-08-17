@@ -1,0 +1,843 @@
+<title>Fitness aufs Handy</title>
+<style>
+  /* ---------- Farbwerte: warme Neutraltöne mit leichtem Rotstich, passend zum App-Rot ---------- */
+  :root {
+    --grund:        #faf8f7;
+    --flaeche:      #ffffff;
+    --flaeche-tief: #f2eeec;
+    --tinte:        #1c1917;
+    --gedaempft:    #6f6662;
+    --linie:        #e6e0dd;
+    --linie-stark:  #d3c9c4;
+    --akzent:       #c0402a;
+    --akzent-weich: #fbeae6;
+    --gut:          #276b51;
+    --gut-weich:    #e4f1eb;
+    --warn:         #8d5411;
+    --warn-weich:   #f8eddd;
+    --code-grund:   #221e1c;
+    --code-tinte:   #e8e2df;
+
+    --schrift: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --grund:        #171413;
+      --flaeche:      #201c1a;
+      --flaeche-tief: #2a2523;
+      --tinte:        #ece7e4;
+      --gedaempft:    #a2968f;
+      --linie:        #322c29;
+      --linie-stark:  #453d39;
+      --akzent:       #ff7355;
+      --akzent-weich: #3a201a;
+      --gut:          #63b593;
+      --gut-weich:    #1b3129;
+      --warn:         #d9a35c;
+      --warn-weich:   #332615;
+      --code-grund:   #100e0d;
+      --code-tinte:   #e8e2df;
+    }
+  }
+  :root[data-theme="dark"] {
+    --grund:        #171413;
+    --flaeche:      #201c1a;
+    --flaeche-tief: #2a2523;
+    --tinte:        #ece7e4;
+    --gedaempft:    #a2968f;
+    --linie:        #322c29;
+    --linie-stark:  #453d39;
+    --akzent:       #ff7355;
+    --akzent-weich: #3a201a;
+    --gut:          #63b593;
+    --gut-weich:    #1b3129;
+    --warn:         #d9a35c;
+    --warn-weich:   #332615;
+    --code-grund:   #100e0d;
+    --code-tinte:   #e8e2df;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--grund);
+    color: var(--tinte);
+    font-family: var(--schrift);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .blatt {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 3rem 1.25rem 5rem;
+  }
+
+  /* ---------- Kopf ---------- */
+  .kopf { border-bottom: 2px solid var(--tinte); padding-bottom: 1.75rem; margin-bottom: 2.5rem; }
+  .augenbraue {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--akzent);
+    margin: 0 0 0.7rem;
+  }
+  h1 {
+    font-size: clamp(2rem, 7vw, 2.9rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    font-weight: 800;
+    margin: 0 0 0.85rem;
+    text-wrap: balance;
+  }
+  .anriss { font-size: 1.05rem; color: var(--gedaempft); margin: 0 0 1.5rem; max-width: 34rem; }
+
+  .kennzahlen { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; }
+  .kennzahl { display: flex; flex-direction: column; }
+  .kennzahl b {
+    font-family: var(--mono); font-size: 1.15rem; font-weight: 600;
+    font-variant-numeric: tabular-nums; line-height: 1.2;
+  }
+  .kennzahl span {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gedaempft);
+  }
+
+  /* ---------- Kasten für Voraussetzungen ---------- */
+  .kasten {
+    background: var(--flaeche);
+    border: 1px solid var(--linie);
+    border-radius: 10px;
+    padding: 1.15rem 1.35rem;
+    margin-bottom: 3rem;
+  }
+  .kasten h2 { font-size: 0.95rem; margin: 0 0 0.6rem; letter-spacing: -0.01em; }
+  .kasten ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+  .kasten li { color: var(--gedaempft); font-size: 0.94rem; }
+  .kasten li b { color: var(--tinte); font-weight: 600; }
+
+  /* ---------- Abschnitte ---------- */
+  .teil { margin-bottom: 3.25rem; }
+  .teil-kopf {
+    display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+    border-bottom: 1px solid var(--linie-stark);
+    padding-bottom: 0.6rem; margin-bottom: 1.75rem;
+  }
+  .teil-kopf h2 {
+    font-size: 1.32rem; letter-spacing: -0.02em; font-weight: 700;
+    margin: 0; flex: 1 1 auto; text-wrap: balance;
+  }
+  /* Das Gerät ist echte Information: die Schritte springen zwischen zwei Geräten hin und her. */
+  .geraet {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.22rem 0.55rem; border-radius: 4px;
+    white-space: nowrap; flex: 0 0 auto;
+  }
+  .geraet.pc { background: var(--flaeche-tief); color: var(--gedaempft); }
+  .geraet.handy { background: var(--akzent-weich); color: var(--akzent); }
+
+  /* ---------- Schritte ---------- */
+  ol.schritte { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.6rem; }
+  .schritt { display: grid; grid-template-columns: 2.6rem 1fr; gap: 0 1rem; align-items: start; }
+  .nummer {
+    font-family: var(--mono); font-size: 0.9rem; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--akzent);
+    padding-top: 0.15rem;
+  }
+  .schritt-inhalt { min-width: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+  .schritt h3 { font-size: 1rem; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .schritt p { margin: 0; }
+  .schritt p.dazu { color: var(--gedaempft); font-size: 0.93rem; }
+
+  /* ---------- Auszeichnungen ---------- */
+  code, .knopf, .pfad {
+    font-family: var(--mono);
+    font-size: 0.86em;
+  }
+  code, .pfad {
+    background: var(--flaeche-tief);
+    border-radius: 4px;
+    padding: 0.1em 0.36em;
+    word-break: break-word;
+  }
+  /* Etwas, das im Bildschirm angeklickt wird — hebt sich von reinem Code ab. */
+  .knopf {
+    background: var(--flaeche);
+    border: 1px solid var(--linie-stark);
+    border-radius: 5px;
+    padding: 0.1em 0.42em;
+    box-shadow: 0 1px 0 var(--linie-stark);
+    white-space: nowrap;
+  }
+
+  pre {
+    margin: 0;
+    background: var(--code-grund);
+    color: var(--code-tinte);
+    border-radius: 8px;
+    padding: 0.9rem 1.05rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  pre .kommentar { color: #8b807a; }
+
+  .merke, .achtung {
+    border-left: 3px solid;
+    border-radius: 0 7px 7px 0;
+    padding: 0.75rem 1rem;
+    font-size: 0.93rem;
+  }
+  .merke { background: var(--gut-weich); border-color: var(--gut); }
+  .merke b { color: var(--gut); }
+  .achtung { background: var(--warn-weich); border-color: var(--warn); }
+  .achtung b { color: var(--warn); }
+
+  /* ---------- Störungstabelle ---------- */
+  .tabellenrahmen { overflow-x: auto; border: 1px solid var(--linie); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; background: var(--flaeche); }
+  th, td { text-align: left; padding: 0.75rem 1rem; vertical-align: top; font-size: 0.92rem; }
+  th {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gedaempft);
+    border-bottom: 1px solid var(--linie-stark); font-weight: 600;
+  }
+  td { border-bottom: 1px solid var(--linie); }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; }
+
+  footer {
+    margin-top: 3.5rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--linie);
+    color: var(--gedaempft); font-size: 0.88rem;
+  }
+
+  a { color: var(--akzent); text-underline-offset: 2px; }
+  a:focus-visible, :focus-visible { outline: 2px solid var(--akzent); outline-offset: 2px; }
+
+  @media (max-width: 34rem) {
+    .blatt { padding: 2rem 1rem 3.5rem; }
+    .schritt { grid-template-columns: 1fr; gap: 0.4rem; }
+    .nummer { padding-top: 0; }
+  }
+</style>
+
+<div class="blatt">
+
+  <header class="kopf">
+    <p class="augenbraue">Veröffentlichen · GitHub Pages</p>
+    <h1>Fitness aufs Handy</h1>
+    <p class="anriss">
+      Von deinem Rechner auf den Startbildschirm deines Android-Handys — ohne Play Store,
+      ohne APK, ohne Android Studio. Einmal einrichten, danach genügt Hochladen.
+    </p>
+    <div class="kennzahlen">
+      <div class="kennzahl"><b>16</b><span>Dateien</span></div>
+      <div class="kennzahl"><b>110 KB</b><span>Gesamtgröße</span></div>
+      <div class="kennzahl"><b>~25 Min</b><span>beim ersten Mal</span></div>
+      <div class="kennzahl"><b>0 €</b><span>Kosten</span></div>
+    </div>
+  </header>
+
+  <div class="kasten">
+    <h2>Was du brauchst</h2>
+    <ul>
+      <li>Den Ordner <span class="pfad">FITNESS</span> auf deinem Rechner — <b>hast du</b></li>
+      <li>Node — <b>ist installiert</b></li>
+      <li>Eine E-Mail-Adresse für das GitHub-Konto</li>
+      <li>Ein Android-Handy mit <b>Chrome</b></li>
+    </ul>
+  </div>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 1 — Paket schnüren</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">01</div>
+        <div class="schritt-inhalt">
+          <h3>PowerShell im Projektordner öffnen</h3>
+          <p>Ordner <span class="pfad">FITNESS</span> im Explorer öffnen, mit gedrückter
+             <span class="knopf">Umschalt</span>-Taste in einen leeren Bereich rechtsklicken und
+             <span class="knopf">PowerShell-Fenster hier öffnen</span> wählen.</p>
+          <p class="dazu">Alternativ: In die Adressleiste des Explorers <code>powershell</code>
+             tippen und Enter drücken.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">02</div>
+        <div class="schritt-inhalt">
+          <h3>Paket bauen</h3>
+          <pre><code>node werkzeuge/paket-bauen.js</code></pre>
+          <p class="dazu">Das sammelt genau die Dateien, die zur App gehören, im neuen Ordner
+             <span class="pfad">veroeffentlichen</span>. Server, Startdatei und Werkzeuge bleiben
+             draußen — die gehören zur Entwicklung, nicht auf den Webserver.</p>
+          <p>Am Ende muss dort stehen:</p>
+          <pre><code>16 Dateien, 110 KB gesamt
+Service-Worker-Version: v1</code></pre>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">03</div>
+        <div class="schritt-inhalt">
+          <h3>Versteckte Dateien sichtbar machen</h3>
+          <p>Im Explorer oben auf <span class="knopf">Ansicht</span> →
+             <span class="knopf">Einblenden</span> → <span class="knopf">Ausgeblendete Elemente</span>.</p>
+          <p class="dazu">Im Paket liegt die Datei <span class="pfad">.nojekyll</span>. Windows
+             versteckt Dateien, die mit einem Punkt beginnen — ohne diesen Schritt würdest du sie
+             beim Hochladen übersehen.</p>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 2 — GitHub-Konto anlegen</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">04</div>
+        <div class="schritt-inhalt">
+          <h3>Auf github.com registrieren</h3>
+          <p><a href="https://github.com/signup">github.com/signup</a> öffnen und
+             E-Mail-Adresse, Passwort und Benutzernamen eingeben.</p>
+          <div class="achtung">
+            <b>Der Benutzername steht später in der Adresse deiner App.</b>
+            Aus <span class="pfad">hape</span> wird
+            <span class="pfad">https://hape.github.io/fitness/</span>.
+            Wähle also etwas, das dir auf Dauer recht ist.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">05</div>
+        <div class="schritt-inhalt">
+          <h3>E-Mail bestätigen</h3>
+          <p>GitHub schickt dir einen Code. Ohne die Bestätigung lässt sich später keine Seite
+             veröffentlichen.</p>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 3 — Ablage für die App anlegen</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">06</div>
+        <div class="schritt-inhalt">
+          <h3>Neues Repository erstellen</h3>
+          <p>Oben rechts auf das <span class="knopf">+</span> klicken →
+             <span class="knopf">New repository</span>.</p>
+          <p class="dazu">Ein Repository ist einfach ein Projektordner bei GitHub.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">07</div>
+        <div class="schritt-inhalt">
+          <h3>Einstellungen setzen</h3>
+          <ul style="margin:0; padding-left:1.1rem; display:flex; flex-direction:column; gap:0.3rem;">
+            <li><b>Repository name:</b> <span class="pfad">fitness</span></li>
+            <li><b>Description:</b> leer lassen</li>
+            <li><b>Public</b> auswählen — nicht <span class="knopf">Private</span></li>
+            <li><b>Add a README file</b> <b>nicht</b> ankreuzen</li>
+          </ul>
+          <div class="merke">
+            <b>Warum öffentlich?</b> Im kostenlosen Tarif funktioniert GitHub Pages nur mit
+            öffentlichen Repositories. Hochgeladen wird ausschließlich Programmcode — deine
+            Übungen, Notizen und Trainingsdaten liegen in der Datenbank deines Handys und
+            verlassen es nie.
+          </div>
+          <div class="achtung">
+            <b>README wirklich weglassen.</b> Nur ein komplett leeres Repository zeigt im nächsten
+            Schritt den Link zum Hochladen an.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">08</div>
+        <div class="schritt-inhalt">
+          <h3>Anlegen</h3>
+          <p>Unten auf <span class="knopf">Create repository</span>.</p>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 4 — Dateien hochladen</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">09</div>
+        <div class="schritt-inhalt">
+          <h3>Hochladen starten</h3>
+          <p>Auf der Seite des leeren Repositories steht ein Satz mit dem Link
+             <span class="knopf">uploading an existing file</span>. Darauf klicken.</p>
+          <p class="dazu">Findest du ihn nicht, geht es auch über
+             <span class="knopf">Add file</span> → <span class="knopf">Upload files</span>.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">10</div>
+        <div class="schritt-inhalt">
+          <h3>Inhalt des Paketordners hineinziehen</h3>
+          <p>Ordner <span class="pfad">FITNESS\veroeffentlichen</span> im Explorer öffnen, mit
+             <span class="knopf">Strg</span>+<span class="knopf">A</span> alles markieren und in
+             das Browserfenster ziehen.</p>
+          <div class="achtung">
+            <b>Den Inhalt ziehen, nicht den Ordner.</b> Ziehst du den Ordner
+            <span class="pfad">veroeffentlichen</span> selbst hinein, landet alles eine Ebene zu
+            tief und die App wird nicht gefunden.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">11</div>
+        <div class="schritt-inhalt">
+          <h3>Vollständigkeit prüfen</h3>
+          <p>GitHub listet die hochgeladenen Dateien auf. Es müssen erscheinen:</p>
+          <pre><code>index.html          src/db.js          icons/icon-192.png
+verwaltung.html     src/pwa.js         icons/icon-512.png
+manifest.webmanifest  src/schnitt.js   icons/icon-maskierbar-512.png
+sw.js               src/start.js
+.nojekyll           src/stammdaten.js
+                    src/verwaltung.js
+                    src/video.js
+                    src/youtube.js</code></pre>
+          <p class="dazu">Das sind 16 Einträge. Fehlt <span class="pfad">.nojekyll</span>, hast du
+             Schritt 03 übersprungen — nicht schlimm, siehe Schritt 13.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">12</div>
+        <div class="schritt-inhalt">
+          <h3>Speichern — der wichtigste Klick</h3>
+          <p><b>Bis ganz nach unten scrollen.</b> Unter der Dateiliste kommt ein Abschnitt
+             <span class="knopf">Commit changes</span> mit zwei Textfeldern, darunter der grüne
+             Knopf <span class="knopf">Commit changes</span>.</p>
+          <p class="dazu">Die Textfelder kannst du leer lassen.</p>
+          <div class="achtung">
+            <b>Ohne diesen Klick ist nichts gespeichert.</b> Die Dateiliste zeigt nur, was
+            hochgeladen <i>werden soll</i>. Verlässt du die Seite vorher, bleibt das Repository
+            leer — und in Teil 5 steht dann „You must first add content to your repository",
+            ohne dass <span class="pfad">main</span> zur Auswahl steht.
+          </div>
+          <p><b>Prüfen:</b> Danach landest du auf dem Reiter <span class="knopf">Code</span>.
+             Dort müssen <span class="pfad">index.html</span>, <span class="pfad">sw.js</span>
+             sowie die Ordner <span class="pfad">src</span> und <span class="pfad">icons</span>
+             aufgelistet sein. Erst dann weiter.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">13</div>
+        <div class="schritt-inhalt">
+          <h3>Nur falls <span class="pfad">.nojekyll</span> fehlt</h3>
+          <p><span class="knopf">Add file</span> → <span class="knopf">Create new file</span>,
+             als Dateinamen <span class="pfad">.nojekyll</span> eintragen, Inhalt leer lassen,
+             unten <span class="knopf">Commit changes</span>.</p>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 5 — Seite freischalten</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">14</div>
+        <div class="schritt-inhalt">
+          <h3>Einstellungen öffnen</h3>
+          <p>In der Leiste über dem Repository auf <span class="knopf">Settings</span> — ganz
+             rechts, mit Zahnrad.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">15</div>
+        <div class="schritt-inhalt">
+          <h3>Pages auswählen</h3>
+          <p>In der linken Spalte nach unten scrollen bis <span class="knopf">Pages</span>.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">16</div>
+        <div class="schritt-inhalt">
+          <h3>Quelle festlegen</h3>
+          <ul style="margin:0; padding-left:1.1rem; display:flex; flex-direction:column; gap:0.3rem;">
+            <li>Unter <b>Source</b>: <span class="knopf">Deploy from a branch</span></li>
+            <li>Unter <b>Branch</b>: <span class="knopf">main</span></li>
+            <li>Daneben der Ordner: <span class="knopf">/ (root)</span></li>
+            <li>Dann <span class="knopf">Save</span></li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">17</div>
+        <div class="schritt-inhalt">
+          <h3>Auf die Adresse warten</h3>
+          <p>Ein bis zwei Minuten warten, dann die Seite neu laden. Oben erscheint ein Kasten mit
+             deiner Adresse:</p>
+          <pre><code>https://DEINNAME.github.io/fitness/</code></pre>
+          <p class="dazu">Beim allerersten Mal kann es bis zu fünf Minuten dauern. Unter
+             <span class="knopf">Actions</span> siehst du, ob noch gearbeitet wird — ein gelber
+             Punkt heißt „läuft noch", ein grüner Haken „fertig".</p>
+          <div class="merke">
+            <b>Adresse aufschreiben.</b> Du brauchst sie gleich am Handy. Am einfachsten schickst
+            du sie dir selbst per E-Mail.
+          </div>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 6 — Am Rechner gegenprüfen</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">18</div>
+        <div class="schritt-inhalt">
+          <h3>Adresse öffnen</h3>
+          <p>Die Startseite muss erscheinen: Titel <b>Fitness</b>, darunter vier Kacheln mit
+             Zahlen und die Schaltfläche <span class="knopf">Übungen verwalten</span>.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">19</div>
+        <div class="schritt-inhalt">
+          <h3>Der entscheidende Test</h3>
+          <p>Auf der Startseite darf <b>kein</b> Hinweis
+             <span class="knopf">Offline-Betrieb nicht aktiv</span> stehen.</p>
+          <div class="merke">
+            <b>Ist der Hinweis weg, funktioniert der Offline-Betrieb.</b> Genau das ist der
+            Unterschied zwischen einem Lesezeichen und einer echten App.
+          </div>
+          <p class="dazu">Steht er noch da: einmal neu laden. Bleibt er, siehe Störungstabelle
+             unten.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">20</div>
+        <div class="schritt-inhalt">
+          <h3>Offline gegenprüfen</h3>
+          <p>Seite einmal neu laden, dann WLAN am Rechner ausschalten und erneut neu laden.
+             Die Seite muss weiterhin erscheinen.</p>
+          <p class="dazu">Danach WLAN wieder einschalten.</p>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 7 — Auf dem Handy installieren</h2>
+      <span class="geraet handy">Handy</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">21</div>
+        <div class="schritt-inhalt">
+          <h3>Adresse in Chrome öffnen</h3>
+          <p>Die Adresse aus Schritt 17 in <b>Chrome</b> aufrufen.</p>
+          <div class="achtung">
+            <b>Chrome, nicht Samsung Internet oder Firefox.</b> Das Ablegen auf dem
+            Startbildschirm klappt dort nicht gleich zuverlässig.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">22</div>
+        <div class="schritt-inhalt">
+          <h3>Zum Startbildschirm hinzufügen</h3>
+          <p>Entweder erscheint unten von selbst der Hinweis mit dem Knopf
+             <span class="knopf">Installieren</span> — oder du gehst über das Menü:
+             die drei Punkte oben rechts → <span class="knopf">Zum Startbildschirm hinzufügen</span>
+             beziehungsweise <span class="knopf">App installieren</span>.</p>
+          <p>Namen bestätigen, fertig.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">23</div>
+        <div class="schritt-inhalt">
+          <h3>App vom Startbildschirm starten</h3>
+          <p>Das rote Hantelsymbol antippen. Die App muss im <b>Vollbild ohne Adressleiste</b>
+             starten.</p>
+          <p class="dazu">Erscheint doch die Adressleiste, wurde nur ein Lesezeichen angelegt.
+             Dann Symbol löschen und Schritt 22 über das Menü wiederholen.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">24</div>
+        <div class="schritt-inhalt">
+          <h3>Einmal mit Internet durchklicken</h3>
+          <p>Startseite öffnen, dann <span class="knopf">Übungen verwalten</span> antippen und
+             wieder zurück.</p>
+          <p class="dazu">Damit lädt das Handy alle Dateien in seinen Speicher. Erst danach ist
+             die App wirklich offline nutzbar.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">25</div>
+        <div class="schritt-inhalt">
+          <h3>Flugmodus-Probe</h3>
+          <p>Flugmodus einschalten, App vom Startbildschirm öffnen. Sie muss normal starten und
+             sich bedienen lassen.</p>
+          <div class="achtung">
+            <b>YouTube-Videos brauchen weiterhin Internet.</b> Übungen, Texte, Notizen und
+            Protokoll funktionieren offline — die Videos bleiben schwarz, bis du wieder Empfang
+            hast. Das ist der Preis für Links statt eigener Aufnahmen.
+          </div>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 8 — Übungen aufs Handy bringen</h2>
+      <span class="geraet pc">Rechner</span>
+      <span class="geraet handy">Handy</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">26</div>
+        <div class="schritt-inhalt">
+          <h3>Am Rechner exportieren</h3>
+          <p>App öffnen → <span class="knopf">Übungen verwalten</span> →
+             <span class="knopf">⋯</span> → <span class="knopf">Exportieren</span>.</p>
+          <p class="dazu">Es lädt eine Datei wie
+             <span class="pfad">fitness-sicherung-2026-08-15.json</span> herunter.</p>
+          <div class="merke">
+            <b>Warum überhaupt?</b> Die Datenbank liegt pro Gerät getrennt. Was du am Rechner
+            angelegt hast, kennt das Handy nicht.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">27</div>
+        <div class="schritt-inhalt">
+          <h3>Datei aufs Handy bringen</h3>
+          <p>Per E-Mail an dich selbst, über Google Drive oder per USB-Kabel in den
+             Download-Ordner.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">28</div>
+        <div class="schritt-inhalt">
+          <h3>Am Handy importieren</h3>
+          <p>App öffnen → <span class="knopf">Übungen verwalten</span> →
+             <span class="knopf">⋯</span> → <span class="knopf">Importieren</span> → die
+             JSON-Datei auswählen.</p>
+          <p class="dazu">Danach zeigt die Startseite dieselben Zahlen wie am Rechner.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">29</div>
+        <div class="schritt-inhalt">
+          <h3>Dauerhaft speichern erlauben</h3>
+          <p><span class="knopf">⋯</span> →
+             <span class="knopf">Dauerhaft speichern anfordern</span> antippen.</p>
+          <p class="dazu">Ohne diese Erlaubnis darf Android die Datenbank löschen, wenn der
+             Speicher knapp wird. Vom Startbildschirm aus wird sie fast immer erteilt.</p>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Teil 9 — Später aktualisieren</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">30</div>
+        <div class="schritt-inhalt">
+          <h3>Versionsnummer hochzählen</h3>
+          <p>In <span class="pfad">sw.js</span> steht ganz oben:</p>
+          <pre><code>const VERSION = "v1";   <span class="kommentar">→ auf "v2" ändern</span></code></pre>
+          <div class="achtung">
+            <b>Das ist der Schritt, den man vergisst.</b> Ohne neue Nummer behält dein Handy
+            hartnäckig den alten Stand — es bevorzugt seine gespeicherte Fassung. Du lädst hoch,
+            wunderst dich, und nichts ändert sich.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">31</div>
+        <div class="schritt-inhalt">
+          <h3>Paket neu bauen</h3>
+          <pre><code>node werkzeuge/paket-bauen.js</code></pre>
+          <p class="dazu">Die ausgegebene Service-Worker-Version muss jetzt <code>v2</code> lauten.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">32</div>
+        <div class="schritt-inhalt">
+          <h3>Erneut hochladen</h3>
+          <p>Im Repository <span class="knopf">Add file</span> →
+             <span class="knopf">Upload files</span>, wieder den Inhalt von
+             <span class="pfad">veroeffentlichen</span> hineinziehen, dann
+             <span class="knopf">Commit changes</span>.</p>
+          <p class="dazu">Gleichnamige Dateien werden ersetzt, nichts wird doppelt.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">33</div>
+        <div class="schritt-inhalt">
+          <h3>Am Handy übernehmen</h3>
+          <p>App öffnen. Es erscheint <span class="knopf">Neue Fassung verfügbar</span> mit einem
+             Knopf <span class="knopf">Jetzt aktualisieren</span>. Antippen — die App lädt sich
+             selbst neu.</p>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Wenn etwas nicht klappt</h2>
+    </div>
+    <div class="tabellenrahmen">
+      <table>
+        <thead>
+          <tr><th>Symptom</th><th>Ursache</th><th>Abhilfe</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Bei <b>Branch</b> steht nur <span class="knopf">None</span>, die Suche nach
+                <span class="pfad">main</span> findet nichts</td>
+            <td>Das Repository ist leer — der Upload wurde nicht mit
+                <span class="knopf">Commit changes</span> abgeschlossen</td>
+            <td>Reiter <span class="knopf">Code</span> öffnen. Sind dort keine Dateien, Schritt 09
+                bis 12 wiederholen und diesmal bis ans Seitenende scrollen. Erst mit Inhalt im
+                Repository bietet GitHub <span class="pfad">main</span> an.</td>
+          </tr>
+          <tr>
+            <td>404 unter der Pages-Adresse</td>
+            <td>Seite noch im Bau, oder falscher Branch gewählt</td>
+            <td>Fünf Minuten warten. Dann unter <b>Settings → Pages</b> prüfen: Branch
+                <span class="pfad">main</span>, Ordner <span class="pfad">/ (root)</span>.</td>
+          </tr>
+          <tr>
+            <td>Seite lädt, sieht aber kaputt aus</td>
+            <td>Der Ordner <span class="pfad">src</span> fehlt oder liegt eine Ebene zu tief</td>
+            <td>Im Repository nachsehen: <span class="pfad">src</span> und
+                <span class="pfad">icons</span> müssen direkt neben
+                <span class="pfad">index.html</span> liegen. Sonst Schritt 10 wiederholen und den
+                <b>Inhalt</b> ziehen.</td>
+          </tr>
+          <tr>
+            <td><span class="knopf">Offline-Betrieb nicht aktiv</span> bleibt stehen</td>
+            <td>Adresse ohne <span class="pfad">https</span> aufgerufen</td>
+            <td>Adresse prüfen — sie muss mit <span class="pfad">https://</span> beginnen. Über
+                <span class="pfad">http://192.168…</span> geht der Offline-Betrieb grundsätzlich
+                nicht.</td>
+          </tr>
+          <tr>
+            <td>Kein Angebot zum Installieren</td>
+            <td>Nicht Chrome, oder Seite noch nicht fertig geladen</td>
+            <td>Chrome verwenden, Seite einmal komplett laden lassen, dann das Menü mit den drei
+                Punkten öffnen.</td>
+          </tr>
+          <tr>
+            <td>App startet mit Adressleiste</td>
+            <td>Es wurde nur ein Lesezeichen angelegt</td>
+            <td>Symbol vom Startbildschirm löschen und über das Menü
+                <span class="knopf">App installieren</span> wählen.</td>
+          </tr>
+          <tr>
+            <td>Änderungen kommen nicht an</td>
+            <td><code>VERSION</code> in <span class="pfad">sw.js</span> nicht hochgezählt</td>
+            <td>Schritt 30 bis 32 nachholen. Im Notfall: App-Symbol löschen, in Chrome die Adresse
+                öffnen, neu installieren.</td>
+          </tr>
+          <tr>
+            <td>Übungen sind weg</td>
+            <td>Android hat den Speicher freigeräumt</td>
+            <td>Sicherung importieren (Schritt 28) und danach unbedingt
+                <span class="knopf">Dauerhaft speichern anfordern</span> antippen.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Deine Übungen, Notizen und Trainingsdaten liegen ausschließlich auf deinen Geräten.
+    Hochgeladen wird nur der Programmcode der App.
+  </footer>
+
+</div>

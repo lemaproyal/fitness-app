@@ -1,0 +1,332 @@
+<title>Fitness aktualisieren</title>
+<style>
+  :root {
+    --grund:        #faf8f7;
+    --flaeche:      #ffffff;
+    --flaeche-tief: #f2eeec;
+    --tinte:        #1c1917;
+    --gedaempft:    #6f6662;
+    --linie:        #e6e0dd;
+    --linie-stark:  #d3c9c4;
+    --akzent:       #c0402a;
+    --akzent-weich: #fbeae6;
+    --gut:          #276b51;
+    --gut-weich:    #e4f1eb;
+    --warn:         #8d5411;
+    --warn-weich:   #f8eddd;
+    --code-grund:   #221e1c;
+    --code-tinte:   #e8e2df;
+
+    --schrift: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --grund: #171413; --flaeche: #201c1a; --flaeche-tief: #2a2523;
+      --tinte: #ece7e4; --gedaempft: #a2968f; --linie: #322c29; --linie-stark: #453d39;
+      --akzent: #ff7355; --akzent-weich: #3a201a;
+      --gut: #63b593; --gut-weich: #1b3129;
+      --warn: #d9a35c; --warn-weich: #332615;
+      --code-grund: #100e0d; --code-tinte: #e8e2df;
+    }
+  }
+  :root[data-theme="dark"] {
+    --grund: #171413; --flaeche: #201c1a; --flaeche-tief: #2a2523;
+    --tinte: #ece7e4; --gedaempft: #a2968f; --linie: #322c29; --linie-stark: #453d39;
+    --akzent: #ff7355; --akzent-weich: #3a201a;
+    --gut: #63b593; --gut-weich: #1b3129;
+    --warn: #d9a35c; --warn-weich: #332615;
+    --code-grund: #100e0d; --code-tinte: #e8e2df;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--grund); color: var(--tinte);
+    font-family: var(--schrift); font-size: 16.5px; line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  .blatt { max-width: 42rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+
+  .augenbraue {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--akzent); margin: 0 0 0.6rem;
+  }
+  h1 {
+    font-size: clamp(1.8rem, 6vw, 2.4rem); line-height: 1.05; letter-spacing: -0.025em;
+    font-weight: 800; margin: 0 0 0.7rem; text-wrap: balance;
+  }
+  .anriss { color: var(--gedaempft); margin: 0 0 2rem; max-width: 32rem; }
+
+  /* Der Ablauf steht ganz oben: Diese Seite liest man beim zwanzigsten Mal,
+     nicht beim ersten. Die Erklärungen kommen erst darunter. */
+  .kurzfassung {
+    background: var(--flaeche); border: 2px solid var(--tinte);
+    border-radius: 12px; padding: 1.2rem 1.4rem; margin-bottom: 2.5rem;
+  }
+  .kurzfassung h2 {
+    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--gedaempft); margin: 0 0 0.9rem;
+  }
+  .kurzfassung ol { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.55rem; }
+  .kurzfassung li { font-size: 0.95rem; }
+  .kurzfassung code { font-size: 0.84em; }
+
+  .teil { margin-bottom: 2.75rem; }
+  .teil-kopf {
+    display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+    border-bottom: 1px solid var(--linie-stark); padding-bottom: 0.55rem; margin-bottom: 1.5rem;
+  }
+  .teil-kopf h2 { font-size: 1.2rem; letter-spacing: -0.02em; margin: 0; flex: 1 1 auto; }
+  .geraet {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.22rem 0.55rem; border-radius: 4px; white-space: nowrap;
+  }
+  .geraet.pc { background: var(--flaeche-tief); color: var(--gedaempft); }
+  .geraet.handy { background: var(--akzent-weich); color: var(--akzent); }
+
+  ol.schritte { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.4rem; }
+  .schritt { display: grid; grid-template-columns: 2.3rem 1fr; gap: 0 0.9rem; align-items: start; }
+  .nummer {
+    font-family: var(--mono); font-size: 0.9rem; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--akzent); padding-top: 0.15rem;
+  }
+  .schritt-inhalt { min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .schritt h3 { font-size: 0.98rem; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .schritt p { margin: 0; }
+  .schritt p.dazu { color: var(--gedaempft); font-size: 0.92rem; }
+
+  code, .knopf, .pfad { font-family: var(--mono); font-size: 0.86em; }
+  code, .pfad { background: var(--flaeche-tief); border-radius: 4px; padding: 0.1em 0.36em; word-break: break-word; }
+  .knopf {
+    background: var(--flaeche); border: 1px solid var(--linie-stark); border-radius: 5px;
+    padding: 0.1em 0.42em; box-shadow: 0 1px 0 var(--linie-stark); white-space: nowrap;
+  }
+  pre {
+    margin: 0; background: var(--code-grund); color: var(--code-tinte);
+    border-radius: 8px; padding: 0.85rem 1rem; overflow-x: auto;
+    font-family: var(--mono); font-size: 0.82rem; line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  pre .gut { color: #7fce9f; }
+  pre .grau { color: #8b807a; }
+
+  .merke, .achtung {
+    border-left: 3px solid; border-radius: 0 7px 7px 0;
+    padding: 0.7rem 1rem; font-size: 0.92rem;
+  }
+  .merke { background: var(--gut-weich); border-color: var(--gut); }
+  .merke b { color: var(--gut); }
+  .achtung { background: var(--warn-weich); border-color: var(--warn); }
+  .achtung b { color: var(--warn); }
+
+  .tabellenrahmen { overflow-x: auto; border: 1px solid var(--linie); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 30rem; background: var(--flaeche); }
+  th, td { text-align: left; padding: 0.7rem 0.95rem; vertical-align: top; font-size: 0.9rem; }
+  th {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gedaempft); border-bottom: 1px solid var(--linie-stark); font-weight: 600;
+  }
+  td { border-bottom: 1px solid var(--linie); }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; }
+
+  footer { margin-top: 2.5rem; padding-top: 1.2rem; border-top: 1px solid var(--linie);
+           color: var(--gedaempft); font-size: 0.86rem; }
+  a { color: var(--akzent); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--akzent); outline-offset: 2px; }
+
+  @media (max-width: 34rem) {
+    .blatt { padding: 2rem 1rem 3rem; }
+    .schritt { grid-template-columns: 1fr; gap: 0.35rem; }
+    .nummer { padding-top: 0; }
+  }
+</style>
+
+<div class="blatt">
+
+  <p class="augenbraue">Routine · dauert 5 Minuten</p>
+  <h1>Fitness aktualisieren</h1>
+  <p class="anriss">
+    Neue Fassung vom Rechner auf das Handy bringen. Der Ablauf ist jedes Mal derselbe.
+  </p>
+
+  <div class="kurzfassung">
+    <h2>Der Ablauf in Kurzform</h2>
+    <ol>
+      <li><code>node werkzeuge/paket-bauen.js</code></li>
+      <li>Bei GitHub den Inhalt von <span class="pfad">veroeffentlichen</span> hochladen und <span class="knopf">Commit changes</span></li>
+      <li><code>node werkzeuge/online-pruefen.js</code> bis „Aktuell" erscheint</li>
+      <li>Am Handy die App öffnen → <span class="knopf">Jetzt aktualisieren</span></li>
+    </ol>
+  </div>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Am Rechner</h2>
+      <span class="geraet pc">Rechner</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">01</div>
+        <div class="schritt-inhalt">
+          <h3>PowerShell im Projektordner öffnen</h3>
+          <p>Ordner <span class="pfad">FITNESS</span> im Explorer öffnen, oben in die Adressleiste
+             <code>powershell</code> tippen, Enter.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">02</div>
+        <div class="schritt-inhalt">
+          <h3>Paket bauen</h3>
+          <pre><code>node werkzeuge/paket-bauen.js</code></pre>
+          <p>Am Ende der Ausgabe steht die Versionsnummer. <b>Merk sie dir</b> — du brauchst sie
+             in Schritt 05.</p>
+          <pre><code>17 Dateien, 128 KB gesamt
+<span class="gut">Service-Worker-Version: v6</span></code></pre>
+          <div class="achtung">
+            <b>Wenn du selbst Dateien geändert hast:</b> vorher in <span class="pfad">sw.js</span>
+            ganz oben <code>const VERSION</code> hochzählen. Ohne neue Nummer behält dein Handy
+            den alten Stand — das ist der Fehler, der einen jedes Mal eine Viertelstunde kostet.
+            Habe ich die Änderung gemacht, ist die Nummer schon hochgezählt.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">03</div>
+        <div class="schritt-inhalt">
+          <h3>Hochladen</h3>
+          <p><a href="https://github.com/lemaproyal/fitness-app">github.com/lemaproyal/fitness-app</a>
+             öffnen → <span class="knopf">Add file</span> → <span class="knopf">Upload files</span>.</p>
+          <p>Ordner <span class="pfad">FITNESS\veroeffentlichen</span> im Explorer öffnen,
+             <span class="knopf">Strg</span>+<span class="knopf">A</span>, alles ins Browserfenster ziehen.</p>
+          <div class="achtung">
+            <b>Den Inhalt ziehen, nicht den Ordner.</b> Und danach <b>bis ans Seitenende scrollen</b> —
+            der grüne Knopf <span class="knopf">Commit changes</span> sitzt weit unter der Dateiliste.
+            Ohne diesen Klick passiert nichts.
+          </div>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">04</div>
+        <div class="schritt-inhalt">
+          <h3>Warten, bis GitHub fertig ist</h3>
+          <p>Rechts auf der Repository-Seite unter <b>Deployments</b> erscheint nach ein bis zwei
+             Minuten ein frischer Eintrag <span class="knopf">github-pages</span> mit grünem Haken.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">05</div>
+        <div class="schritt-inhalt">
+          <h3>Nachprüfen, ob es online ist</h3>
+          <pre><code>node werkzeuge/online-pruefen.js</code></pre>
+          <p>Solange dort noch die alte Nummer steht, baut GitHub noch — einfach nach einer Minute
+             erneut ausführen.</p>
+          <pre><code>Lokal:    v6
+Online:   v6
+
+<span class="gut">Aktuell.</span> Am Handy die App öffnen und "Jetzt aktualisieren" antippen.</code></pre>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Am Handy</h2>
+      <span class="geraet handy">Handy</span>
+    </div>
+    <ol class="schritte">
+
+      <li class="schritt">
+        <div class="nummer">06</div>
+        <div class="schritt-inhalt">
+          <h3>App vom Startbildschirm öffnen</h3>
+          <p>Auf der Startseite erscheint <span class="knopf">Neue Fassung verfügbar</span> mit
+             einem Knopf <span class="knopf">Jetzt aktualisieren</span>. Antippen — die App lädt
+             sich selbst neu.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">07</div>
+        <div class="schritt-inhalt">
+          <h3>Falls keine Meldung kommt</h3>
+          <p>App vollständig schließen: die Übersicht der zuletzt geöffneten Apps aufrufen und
+             Fitness wegwischen. Dann erneut vom Startbildschirm starten.</p>
+          <p class="dazu">Der Service Worker prüft beim Start auf Neuerungen. Läuft die App schon
+             länger im Hintergrund, hat sie noch nicht nachgesehen.</p>
+        </div>
+      </li>
+
+      <li class="schritt">
+        <div class="nummer">08</div>
+        <div class="schritt-inhalt">
+          <h3>Kurz gegenprüfen</h3>
+          <p>Sieht die Änderung so aus wie erwartet? Sind deine Übungen noch da?</p>
+          <div class="merke">
+            <b>Deine Daten überstehen jedes Update.</b> Übungen, Videolinks, Notizen und das
+            Trainingsprotokoll liegen in der Datenbank des Handys — aktualisiert wird nur der
+            Programmcode.
+          </div>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="teil">
+    <div class="teil-kopf">
+      <h2>Wenn etwas klemmt</h2>
+    </div>
+    <div class="tabellenrahmen">
+      <table>
+        <thead>
+          <tr><th>Symptom</th><th>Was tun</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>online-pruefen</code> zeigt dauerhaft die alte Nummer</td>
+            <td>Der Commit fehlt. Bei GitHub auf <span class="knopf">Code</span> schauen: Steht dort
+                als Zeitpunkt der letzten Änderung etwas Aktuelles? Wenn nicht, Schritt 03
+                wiederholen und bis ans Seitenende scrollen.</td>
+          </tr>
+          <tr>
+            <td>Am Handy ändert sich nichts</td>
+            <td>Meist wurde <code>VERSION</code> in <span class="pfad">sw.js</span> nicht hochgezählt.
+                Nummer erhöhen, Schritt 02 bis 05 wiederholen.</td>
+          </tr>
+          <tr>
+            <td>App startet gar nicht mehr</td>
+            <td>Symbol vom Startbildschirm löschen, in Chrome
+                <span class="pfad">lemaproyal.github.io/fitness-app/</span> öffnen, neu installieren.
+                Die Datenbank bleibt dabei erhalten.</td>
+          </tr>
+          <tr>
+            <td>Übungen sind verschwunden</td>
+            <td>Android hat den Speicher freigeräumt. Sicherung über
+                <span class="knopf">⋯</span> → <span class="knopf">Importieren</span> einspielen und
+                danach <span class="knopf">Dauerhaft speichern anfordern</span> antippen.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <b>Vor größeren Änderungen:</b> in der App <span class="knopf">⋯</span> →
+    <span class="knopf">Exportieren</span> und die JSON-Datei aufheben. Das ist deine einzige
+    Sicherung.<br>
+    App: <span class="pfad">lemaproyal.github.io/fitness-app/</span> ·
+    Code: <span class="pfad">github.com/lemaproyal/fitness-app</span>
+  </footer>
+
+</div>

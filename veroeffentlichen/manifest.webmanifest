@@ -1,0 +1,27 @@
+{
+  "name": "Fitness — Trainingstagebuch",
+  "short_name": "Fitness",
+  "description": "Übungskatalog und Trainingsplanung für den 2er-Split. Alle Daten bleiben auf dem Gerät.",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121418",
+  "theme_color": "#d4462a",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-maskierbar-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Übungen verwalten",
+      "short_name": "Übungen",
+      "url": "./verwaltung.html",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "$schema": "./uebungen.schema.md",
+  "version": 1,
+  "skelett": {
+    "gelenke": ["kopf", "nacken", "huefte", "knie", "knoechel", "zeh", "ellbogen", "hand"],
+    "knochen": [
+      ["nacken", "huefte"],
+      ["huefte", "knie"],
+      ["knie", "knoechel"],
+      ["knoechel", "zeh"],
+      ["nacken", "ellbogen"],
+      ["ellbogen", "hand"]
+    ]
+  },
+  "uebungen": [
+    {
+      "id": "squat-jump",
+      "name": "Squat Jump",
+      "nameAlt": ["Countermovement Jump", "Hocksprung"],
+      "kategorie": "plyometrie",
+      "tag": "A",
+      "level": "mittel",
+      "equipment": [],
+      "unilateral": false,
+      "muskelnPrimaer": ["quadrizeps", "gesaess", "waden"],
+      "muskelnSekundaer": ["rumpf", "ischiocrurale"],
+      "ausfuehrung": [
+        "Aufrecht stehen, Füße etwa hüftbreit, Gewicht auf dem ganzen Fuß.",
+        "Zügig in die halbe Kniebeuge absenken, Hüfte nach hinten, Arme schwingen nach hinten.",
+        "Ohne Pause explosiv nach oben abdrücken, Arme schwingen nach vorne oben mit.",
+        "Mit der Fußballen zuerst landen, dann Ferse, Knie und Hüfte weich nachgeben lassen.",
+        "Kurz stabilisieren, erst dann die nächste Wiederholung."
+      ],
+      "hinweise": [
+        "Leise landen — das ist der beste Selbsttest für eine kontrollierte Landung.",
+        "Die Abwärtsbewegung und der Absprung sind eine Bewegung, keine zwei.",
+        "Knie zeigen in Richtung der Fußspitzen, nicht nach innen."
+      ],
+      "fehler": [
+        "Zu tief absenken — kostet Explosivität, bringt keinen Vorteil.",
+        "Steifbeinig landen, ohne Knie und Hüfte nachgeben zu lassen.",
+        "Sätze bis zur Erschöpfung ziehen; ab da trainiert man nur noch Müdigkeit."
+      ],
+      "standard": { "saetze": 4, "wiederholungen": 5, "pauseSek": 90 },
+      "animation": {
+        "viewBox": "0 0 200 260",
+        "boden": 240,
+        "dauerMs": 2400,
+        "keyTimes": [0, 0.3, 0.45, 0.6, 1],
+        "posen": [
+          { "kopf": [100, 60], "nacken": [100, 78], "huefte": [100, 130], "knie": [100, 178], "knoechel": [100, 236], "zeh": [118, 240], "ellbogen": [100, 105], "hand": [100, 130] },
+          { "kopf": [100, 106], "nacken": [96, 122], "huefte": [82, 168], "knie": [114, 186], "knoechel": [100, 236], "zeh": [118, 240], "ellbogen": [78, 132], "hand": [62, 142] },
+          { "kopf": [100, 42], "nacken": [100, 58], "huefte": [100, 110], "knie": [100, 162], "knoechel": [100, 216], "zeh": [108, 230], "ellbogen": [104, 34], "hand": [108, 12] },
+          { "kopf": [102, 86], "nacken": [98, 102], "huefte": [88, 152], "knie": [110, 182], "knoechel": [100, 236], "zeh": [118, 240], "ellbogen": [110, 116], "hand": [122, 124] },
+          { "kopf": [100, 60], "nacken": [100, 78], "huefte": [100, 130], "knie": [100, 178], "knoechel": [100, 236], "zeh": [118, 240], "ellbogen": [100, 105], "hand": [100, 130] }
+        ]
+      }
+    },
+    {
+      "id": "pogo-hops",
+      "name": "Pogo Hops",
+      "nameAlt": ["Sprunggelenk-Hüpfer", "Ankle Hops"],
+      "kategorie": "plyometrie",
+      "tag": "A",
+      "level": "einstieg",
+      "equipment": [],
+      "unilateral": false,
+      "muskelnPrimaer": ["waden", "achillessehne"],
+      "muskelnSekundaer": ["fussgewoelbe", "rumpf"],
+      "ausfuehrung": [
+        "Aufrecht stehen, Füße hüftbreit, Knie fast gestreckt und dort halten.",
+        "Nur aus dem Sprunggelenk kleine, schnelle Hüpfer ausführen.",
+        "Auf dem Fußballen landen, die Ferse berührt den Boden nur kurz und leicht.",
+        "Rumpf bleibt fest, Oberkörper federt nicht mit."
+      ],
+      "hinweise": [
+        "Ziel ist kurzer Bodenkontakt, nicht Höhe.",
+        "Der Rhythmus zählt: schnell und gleichmäßig wie ein Flummi.",
+        "Ideal als Einstieg und zum Aufwärmen vor allen anderen Sprüngen."
+      ],
+      "fehler": [
+        "In die Knie gehen — dann wird daraus ein Squat Jump.",
+        "Zu hoch springen und dadurch den Rhythmus verlieren."
+      ],
+      "standard": { "saetze": 3, "wiederholungen": 20, "pauseSek": 60 },
+      "animation": {
+        "viewBox": "0 0 200 260",
+        "boden": 240,
+        "dauerMs": 600,
+        "keyTimes": [0, 0.35, 1],
+        "posen": [
+          { "kopf": [100, 66], "nacken": [100, 84], "huefte": [100, 136], "knie": [100, 182], "knoechel": [100, 238], "zeh": [116, 240], "ellbogen": [100, 111], "hand": [100, 134] },
+          { "kopf": [100, 42], "nacken": [100, 60], "huefte": [100, 112], "knie": [100, 160], "knoechel": [100, 218], "zeh": [112, 232], "ellbogen": [100, 87], "hand": [100, 110] },
+          { "kopf": [100, 66], "nacken": [100, 84], "huefte": [100, 136], "knie": [100, 182], "knoechel": [100, 238], "zeh": [116, 240], "ellbogen": [100, 111], "hand": [100, 134] }
+        ]
+      }
+    },
+    {
+      "id": "plyo-liegestuetz",
+      "name": "Plyo-Liegestütz",
+      "nameAlt": ["Plyometric Push-up", "Klatsch-Liegestütz"],
+      "kategorie": "plyometrie",
+      "tag": "A",
+      "level": "fortgeschritten",
+      "equipment": [],
+      "unilateral": false,
+      "muskelnPrimaer": ["brust", "trizeps", "vordere-schulter"],
+      "muskelnSekundaer": ["rumpf", "saegemuskel"],
+      "ausfuehrung": [
+        "Liegestützposition, Hände etwa schulterbreit, Körper bildet eine Linie von Kopf bis Ferse.",
+        "Kontrolliert absenken, bis die Brust knapp über dem Boden ist.",
+        "Explosiv hochdrücken, bis die Hände vom Boden abheben.",
+        "Weich mit leicht gebeugten Armen wieder auffangen und direkt in die nächste Wiederholung absenken."
+      ],
+      "hinweise": [
+        "Progression in drei Stufen: an einer Erhöhung → am Boden mit Handabheben → mit Klatschen.",
+        "Die Hüfte darf nicht durchhängen; Gesäß und Bauch bleiben angespannt.",
+        "Bei Handgelenksbeschwerden auf Parallettes oder Hanteln als Griffe ausweichen."
+      ],
+      "fehler": [
+        "Hüfte sackt ab, der Rücken wird hohl.",
+        "Mit gestreckten Armen landen — die Last geht direkt in Ellbogen und Handgelenke.",
+        "Zu viele Wiederholungen; ab der ersten schwerfälligen ist der Satz vorbei."
+      ],
+      "standard": { "saetze": 3, "wiederholungen": 5, "pauseSek": 90 },
+      "animation": {
+        "viewBox": "0 0 240 220",
+        "boden": 200,
+        "dauerMs": 2200,
+        "keyTimes": [0, 0.45, 0.62, 1],
+        "posen": [
+          { "kopf": [192, 140], "nacken": [172, 150], "huefte": [106, 162], "knie": [66, 174], "knoechel": [34, 184], "zeh": [24, 200], "ellbogen": [174, 172], "hand": [174, 196] },
+          { "kopf": [184, 170], "nacken": [164, 178], "huefte": [104, 182], "knie": [64, 184], "knoechel": [33, 186], "zeh": [24, 200], "ellbogen": [150, 190], "hand": [172, 196] },
+          { "kopf": [196, 128], "nacken": [176, 138], "huefte": [108, 152], "knie": [68, 166], "knoechel": [35, 178], "zeh": [24, 200], "ellbogen": [176, 160], "hand": [176, 184] },
+          { "kopf": [192, 140], "nacken": [172, 150], "huefte": [106, 162], "knie": [66, 174], "knoechel": [34, 184], "zeh": [24, 200], "ellbogen": [174, 172], "hand": [174, 196] }
+        ]
+      }
+    }
+  ]
+}
