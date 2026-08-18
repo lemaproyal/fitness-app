@@ -12,17 +12,50 @@ export const KATEGORIEN = [
   { id: "core",       name: "Core",        tag: "B", farbe: "#5a4a8c" },
 ];
 
-// kategorien gibt zugleich die Reihenfolge im Training vor.
+// Jeder Trainingstag besteht aus drei Blöcken, jeder Block aus zwei Bereichen:
+// einer Kraftübung und einer Sprung- beziehungsweise Rumpfübung. Die Bereichsnamen
+// sind innerhalb eines Tages eindeutig und dienen als Schlüssel für die Auswahl.
 export const TAGE = [
   {
     id: "A", name: "Tag A", untertitel: "Push + Explosiv", farbe: "#d4462a",
-    kategorien: ["plyometrie", "brust", "trizeps", "schulter"],
+    bloecke: [
+      { name: "Block 1", bereiche: [
+        { name: "Brust",    kategorie: "brust" },
+        { name: "Jump 1",   kategorie: "plyometrie" },
+      ]},
+      { name: "Block 2", bereiche: [
+        { name: "Schulter", kategorie: "schulter" },
+        { name: "Jump 2",   kategorie: "plyometrie" },
+      ]},
+      { name: "Block 3", bereiche: [
+        { name: "Trizeps",  kategorie: "trizeps" },
+        { name: "Jump 3",   kategorie: "plyometrie" },
+      ]},
+    ],
   },
   {
     id: "B", name: "Tag B", untertitel: "Pull + Beine", farbe: "#2a6079",
-    kategorien: ["ruecken", "beine", "bizeps", "core"],
+    bloecke: [
+      { name: "Block 1", bereiche: [
+        { name: "Beine",    kategorie: "beine" },
+        { name: "Core 1",   kategorie: "core" },
+      ]},
+      { name: "Block 2", bereiche: [
+        { name: "Rücken",   kategorie: "ruecken" },
+        { name: "Core 2",   kategorie: "core" },
+      ]},
+      { name: "Block 3", bereiche: [
+        { name: "Bizeps",   kategorie: "bizeps" },
+        { name: "Core 3",   kategorie: "core" },
+      ]},
+    ],
   },
 ];
+
+// Abgeleitet, damit die Zuordnung nur an einer Stelle gepflegt wird.
+for (const tag of TAGE) {
+  tag.kategorien = [...new Set(tag.bloecke.flatMap(b => b.bereiche.map(x => x.kategorie)))];
+}
 
 export const tagNach = id => TAGE.find(t => t.id === id);
 

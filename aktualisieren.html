@@ -153,9 +153,9 @@
   <div class="kurzfassung">
     <h2>Der Ablauf in Kurzform</h2>
     <ol>
-      <li><code>node werkzeuge/paket-bauen.js</code></li>
+      <li><code>cd &quot;C:\Users\Le Map Royal\Desktop\AI Cloud\FITNESS&quot;; node werkzeuge/paket-bauen.js</code></li>
       <li>Bei GitHub den Inhalt von <span class="pfad">veroeffentlichen</span> hochladen und <span class="knopf">Commit changes</span></li>
-      <li><code>node werkzeuge/online-pruefen.js</code> bis „Aktuell" erscheint</li>
+      <li><code>cd &quot;…FITNESS&quot;; node werkzeuge/online-pruefen.js</code> bis „Aktuell" erscheint</li>
       <li>Am Handy die App öffnen → <span class="knopf">Jetzt aktualisieren</span></li>
     </ol>
   </div>
@@ -171,7 +171,7 @@
       <li class="schritt">
         <div class="nummer">01</div>
         <div class="schritt-inhalt">
-          <h3>PowerShell im Projektordner öffnen</h3>
+          <h3>PowerShell öffnen</h3>
           <p>Ordner <span class="pfad">FITNESS</span> im Explorer öffnen, oben in die Adressleiste
              <code>powershell</code> tippen, Enter.</p>
         </div>
@@ -181,7 +181,8 @@
         <div class="nummer">02</div>
         <div class="schritt-inhalt">
           <h3>Paket bauen</h3>
-          <pre><code>node werkzeuge/paket-bauen.js</code></pre>
+          <pre><code>cd &quot;C:\Users\Le Map Royal\Desktop\AI Cloud\FITNESS&quot;
+node werkzeuge/paket-bauen.js</code></pre>
           <p>Am Ende der Ausgabe steht die Versionsnummer. <b>Merk sie dir</b> — du brauchst sie
              in Schritt 05.</p>
           <pre><code>17 Dateien, 128 KB gesamt
@@ -224,7 +225,8 @@
         <div class="nummer">05</div>
         <div class="schritt-inhalt">
           <h3>Nachprüfen, ob es online ist</h3>
-          <pre><code>node werkzeuge/online-pruefen.js</code></pre>
+          <pre><code>cd &quot;C:\Users\Le Map Royal\Desktop\AI Cloud\FITNESS&quot;
+node werkzeuge/online-pruefen.js</code></pre>
           <p>Solange dort noch die alte Nummer steht, baut GitHub noch — einfach nach einer Minute
              erneut ausführen.</p>
           <pre><code>Lokal:    v6

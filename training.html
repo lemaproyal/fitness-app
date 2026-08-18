@@ -12,13 +12,13 @@
   :root {
     --bg: #f6f7f9; --card: #fff; --ink: #16181d; --muted: #62676f;
     --line: #dfe2e7; --accent: #d4462a; --chip: #eef0f3;
-    --gut: #2f7d5e; --tagfarbe: #d4462a;
+    --gut: #2f7d5e; --tagfarbe: #d4462a; --gewaehlt-grund: #f2f8f5;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #121418; --card: #1c1f25; --ink: #eceef1; --muted: #9aa1ab;
       --line: #2c313a; --accent: #ff6b47; --chip: #262b33;
-      --gut: #4ea882;
+      --gut: #4ea882; --gewaehlt-grund: #1a2420;
     }
   }
   * { box-sizing: border-box; }
@@ -68,43 +68,55 @@
   button.leise { background: none; color: var(--muted); font-weight: 500; padding: 8px 10px; }
   button:disabled { opacity: 0.45; cursor: default; }
 
-  /* ---------- Übungsliste ---------- */
-  .gruppe { margin-top: 22px; }
-  .gruppe > h2 {
+  /* ---------- Blöcke und Bereiche ---------- */
+  .block { margin-top: 26px; }
+  .block > h2 {
+    font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em;
+    margin: 0 0 10px; padding-bottom: 6px;
+    border-bottom: 2px solid var(--tagfarbe);
+  }
+  .bereich { margin-bottom: 16px; }
+  .bereich > h3 {
+    display: flex; align-items: baseline; gap: 8px;
     font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
-    color: var(--muted); margin: 0 0 8px 2px; display: flex; align-items: center; gap: 7px;
+    color: var(--muted); margin: 0 0 7px 2px; font-weight: 600;
   }
-  .gruppe > h2::before {
-    content: ""; width: 9px; height: 9px; border-radius: 50%;
-    background: var(--gruppenfarbe, var(--muted));
+  .zaehler {
+    margin-left: auto; text-transform: none; letter-spacing: 0;
+    font-size: 0.72rem; font-weight: 500;
   }
-  .gruppe > h2 span { margin-left: auto; text-transform: none; letter-spacing: 0; }
+  .zaehler.aktiv { color: var(--gut); font-weight: 600; }
+  .bereich-leer { margin: 0 0 0 2px; font-size: 0.88rem; color: var(--muted); }
+  .bereich-leer a { color: var(--accent); }
 
+  /* ---------- Übungszeilen ---------- */
   .uebung {
     background: var(--card); border: 1px solid var(--line);
-    border-radius: 11px; margin-bottom: 8px; overflow: hidden;
+    border-radius: 11px; margin-bottom: 6px; overflow: hidden;
   }
+  .uebung.gewaehlt { border-color: var(--gut); background: var(--gewaehlt-grund); }
   .uebung.offen { border-color: var(--tagfarbe); }
-  .zeile {
-    display: flex; align-items: center; gap: 11px;
-    padding: 10px 12px; cursor: pointer; width: 100%;
-    background: none; border: none; text-align: left; color: inherit;
-    font: inherit; font-weight: 400; border-radius: 0;
+  .zeile { display: flex; align-items: center; gap: 10px; padding: 9px 11px; }
+  .zeile button {
+    background: none; border: none; color: inherit; font: inherit;
+    padding: 0; border-radius: 0; cursor: pointer; font-weight: 400;
   }
-  .haken {
-    flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px;
-    border: 2px solid var(--line); background: none; padding: 0;
-    display: grid; place-items: center; color: transparent; font-size: 0.8rem;
+  .waehlen {
+    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 7px;
+    border: 2px solid var(--line); display: grid; place-items: center;
+    color: transparent; font-size: 0.82rem;
   }
-  .uebung.erledigt .haken { background: var(--gut); border-color: var(--gut); color: #fff; }
-  .uebung.erledigt .titel { text-decoration: line-through; color: var(--muted); }
-  .zeile .titel { flex: 1 1 auto; min-width: 0; font-weight: 600; font-size: 0.97rem; }
-  .zeile .vorgabe { flex: 0 0 auto; font-size: 0.8rem; color: var(--muted);
-                    font-variant-numeric: tabular-nums; }
-  .zeile .pfeil { flex: 0 0 auto; color: var(--muted); transition: transform 0.15s; }
+  .uebung.gewaehlt .waehlen { background: var(--gut); border-color: var(--gut); color: #fff; }
+  .uebung.gewaehlt .titel { font-weight: 700; }
+  .oeffnen { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; }
+  .titel { flex: 1 1 auto; min-width: 0; font-weight: 600; font-size: 0.96rem;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vorgabe { flex: 0 0 auto; font-size: 0.79rem; color: var(--muted);
+             font-variant-numeric: tabular-nums; }
+  .pfeil { flex: 0 0 auto; color: var(--muted); transition: transform 0.15s; }
   .uebung.offen .pfeil { transform: rotate(90deg); }
 
-  .details { padding: 0 12px 14px; display: none; }
+  .details { padding: 0 11px 13px; display: none; }
   .uebung.offen .details { display: block; }
   .details video, .details iframe, .details .kein-video {
     display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
@@ -114,7 +126,7 @@
     background: var(--chip); color: var(--muted);
     display: grid; place-items: center; font-size: 0.86rem;
   }
-  .details h3 {
+  .details h4 {
     font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em;
     color: var(--muted); margin: 14px 0 5px;
   }
