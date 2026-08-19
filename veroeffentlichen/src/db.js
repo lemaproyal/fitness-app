@@ -127,6 +127,8 @@ function normalisiereUebung(u) {
     messtyp: u.messtyp ?? "gewicht-wdh",
     equipment: u.equipment ?? [],
     unilateral: !!u.unilateral,
+    // Nur für Jump- und Core-Übungen: 1, 2 oder 3. Leer heißt: in jedem Block wählbar.
+    block: u.block ? Number(u.block) : null,
     muskelnPrimaer: u.muskelnPrimaer ?? [],
     muskelnSekundaer: u.muskelnSekundaer ?? [],
     ausfuehrung: u.ausfuehrung ?? [],

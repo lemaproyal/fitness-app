@@ -256,9 +256,14 @@
           <label for="fKategorie">Kategorie</label>
           <select id="fKategorie" required></select>
         </div>
-        <div class="feld">
-          <label for="fLevel">Level</label>
-          <select id="fLevel"></select>
+        <div class="feld" id="blockFeld" hidden>
+          <label for="fBlock">Block</label>
+          <select id="fBlock">
+            <option value="">alle Blöcke</option>
+            <option value="1">nur Block 1</option>
+            <option value="2">nur Block 2</option>
+            <option value="3">nur Block 3</option>
+          </select>
         </div>
       </div>
 

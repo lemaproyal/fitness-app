@@ -4,7 +4,7 @@
  */
 
 import { uebungen, medien, speicherInfo, persistentAnfordern, exportieren, importieren, slug } from "./db.js";
-import { KATEGORIEN, TAGE, LEVEL, MESSTYPEN, EQUIPMENT, SEED_PLYOMETRIE,
+import { KATEGORIEN, TAGE, MESSTYPEN, EQUIPMENT, SEED_PLYOMETRIE,
          kategorieNach, tagVonKategorie } from "./stammdaten.js";
 import { aufbereiten, aufbereitenLink, schleifeAbspielen,
          linkHerunterladen, groesseFormatieren } from "./video.js";
@@ -38,11 +38,17 @@ function selectFuellen(el, eintraege, leerText = null) {
 selectFuellen($("filterTag"), TAGE, "Alle Tage");
 selectFuellen($("filterKategorie"), KATEGORIEN, "Alle Kategorien");
 
+// Nur Jump- und Core-Übungen lassen sich einem Block zuordnen; bei den
+// Kraftübungen ist der Block schon durch die Kategorie festgelegt.
+const MIT_BLOCK = ["plyometrie", "core"];
+const blockFeldAktualisieren = () => {
+  $("blockFeld").hidden = !MIT_BLOCK.includes($("fKategorie").value);
+};
+
 // Von der Startseite kommend ist der Tag schon vorgewählt: verwaltung.html?tag=A
 const tagAusAdresse = new URLSearchParams(location.search).get("tag");
 if (TAGE.some(t => t.id === tagAusAdresse)) $("filterTag").value = tagAusAdresse;
 selectFuellen($("fKategorie"), KATEGORIEN);
-selectFuellen($("fLevel"), LEVEL);
 selectFuellen($("fMesstyp"), MESSTYPEN);
 $("equipmentListe").innerHTML = EQUIPMENT.map(e => `<option value="${esc(e)}">`).join("");
 
@@ -106,10 +112,8 @@ async function listeZeichnen() {
           <div class="chips">
             ${kat ? `<span class="chip tag" style="background:${esc(kat.farbe)}">Tag ${esc(kat.tag)}</span>
                      <span class="chip">${esc(kat.name)}</span>` : ""}
-            <span class="chip">${esc(LEVEL.find(l => l.id === u.level)?.name ?? u.level)}</span>
-            ${med
-              ? `<span class="chip video">${med.quelle === "datei" ? "✓ Video offline" : "✓ Video per Link"}</span>`
-              : `<span class="chip kein-video">kein Video</span>`}
+            ${u.block ? `<span class="chip">Block ${esc(u.block)}</span>` : ""}
+            ${med ? "" : `<span class="chip kein-video">kein Video</span>`}
             ${u.unilateral ? `<span class="chip">einseitig</span>` : ""}
           </div>
           ${u.notizen ? `<div class="notiz-vorschau">${esc(u.notizen)}</div>` : ""}
@@ -156,7 +160,7 @@ function vorschauHalter() {
 
   const neu = document.createElement("div");
   neu.id = "videoVorschau";
-  neu.className = "platzhalter";
+  neu.className = "vorschau-leer";
   const feld = document.querySelector(".video-feld");
   feld.insertBefore(neu, feld.firstChild);
   return neu;
@@ -288,7 +292,8 @@ async function dialogOeffnen(id = null) {
 
   $("fName").value = u?.name ?? "";
   $("fKategorie").value = u?.kategorie ?? KATEGORIEN[0].id;
-  $("fLevel").value = u?.level ?? "mittel";
+  $("fBlock").value = u?.block ?? "";
+  blockFeldAktualisieren();
   $("fMesstyp").value = u?.messtyp ?? "gewicht-wdh";
   $("fEquipment").value = (u?.equipment ?? []).join(", ");
   $("fMuskeln").value = (u?.muskelnPrimaer ?? []).join(", ");
@@ -393,7 +398,7 @@ async function speichern(ev) {
     name,
     kategorie,
     tag: tagVonKategorie(kategorie),
-    level: $("fLevel").value,
+    block: $("fBlock").value ? Number($("fBlock").value) : null,
     messtyp: $("fMesstyp").value,
     equipment: liste($("fEquipment").value),
     muskelnPrimaer: liste($("fMuskeln").value),
@@ -522,6 +527,7 @@ $("btnLoeschen").addEventListener("click", async () => {
   melden("Gelöscht.");
 });
 
+$("fKategorie").addEventListener("change", blockFeldAktualisieren);
 $("btnLink").addEventListener("click", linkUebernehmen);
 $("btnOffline").addEventListener("click", offlineSpeichern);
 $("fLink").addEventListener("keydown", ev => {

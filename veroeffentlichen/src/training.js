@@ -190,8 +190,11 @@ function uebungZeichnen(u, bereich) {
     </div>`;
 }
 
-function bereichZeichnen(bereich) {
-  const liste = nachKategorie.get(bereich.kategorie) ?? [];
+function bereichZeichnen(bereich, blockNr) {
+  // Jump- und Core-Bereiche zeigen nur Übungen, die diesem Block zugeordnet sind.
+  // Ohne Zuordnung steht eine Übung in allen drei Slots zur Wahl.
+  const liste = (nachKategorie.get(bereich.kategorie) ?? [])
+    .filter(u => !bereich.slot || !u.block || Number(u.block) === blockNr);
   const anzahl = gewaehltIn(bereich.name).filter(id => liste.some(u => u.id === id)).length;
 
   return `
@@ -202,7 +205,7 @@ function bereichZeichnen(bereich) {
       </h3>
       ${liste.length
         ? liste.map(u => uebungZeichnen(u, bereich.name)).join("")
-        : `<p class="bereich-leer">Keine Übung in dieser Kategorie —
+        : `<p class="bereich-leer">Keine Übung für diesen Bereich —
              <a href="./verwaltung.html?tag=${esc(tag.id)}">anlegen</a></p>`}
     </div>`;
 }
@@ -212,10 +215,10 @@ function zeichnen() {
   $("fortschritt").textContent = gewaehlt
     ? `${gewaehlt} ${gewaehlt === 1 ? "Übung" : "Übungen"} gewählt` : "";
 
-  $("liste").innerHTML = tag.bloecke.map(block => `
+  $("liste").innerHTML = tag.bloecke.map((block, nr) => `
     <section class="block">
       <h2>${esc(block.name)}</h2>
-      ${block.bereiche.map(bereichZeichnen).join("")}
+      ${block.bereiche.map(b => bereichZeichnen(b, nr + 1)).join("")}
     </section>`).join("");
 }
 

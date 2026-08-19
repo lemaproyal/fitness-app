@@ -21,15 +21,15 @@ export const TAGE = [
     bloecke: [
       { name: "Block 1", bereiche: [
         { name: "Brust",    kategorie: "brust" },
-        { name: "Jump 1",   kategorie: "plyometrie" },
+        { name: "Jump 1",   kategorie: "plyometrie", slot: true },
       ]},
       { name: "Block 2", bereiche: [
         { name: "Schulter", kategorie: "schulter" },
-        { name: "Jump 2",   kategorie: "plyometrie" },
+        { name: "Jump 2",   kategorie: "plyometrie", slot: true },
       ]},
       { name: "Block 3", bereiche: [
         { name: "Trizeps",  kategorie: "trizeps" },
-        { name: "Jump 3",   kategorie: "plyometrie" },
+        { name: "Jump 3",   kategorie: "plyometrie", slot: true },
       ]},
     ],
   },
@@ -38,15 +38,15 @@ export const TAGE = [
     bloecke: [
       { name: "Block 1", bereiche: [
         { name: "Beine",    kategorie: "beine" },
-        { name: "Core 1",   kategorie: "core" },
+        { name: "Core 1",   kategorie: "core", slot: true },
       ]},
       { name: "Block 2", bereiche: [
         { name: "Rücken",   kategorie: "ruecken" },
-        { name: "Core 2",   kategorie: "core" },
+        { name: "Core 2",   kategorie: "core", slot: true },
       ]},
       { name: "Block 3", bereiche: [
         { name: "Bizeps",   kategorie: "bizeps" },
-        { name: "Core 3",   kategorie: "core" },
+        { name: "Core 3",   kategorie: "core", slot: true },
       ]},
     ],
   },
