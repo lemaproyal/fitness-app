@@ -483,10 +483,13 @@ async function exportDatei() {
 async function importDatei(datei) {
   if (!datei) return;
   try {
-    const ergebnis = await importieren(JSON.parse(await datei.text()));
+    const ersetzen = $("fImportErsetzen").checked;
+    if (ersetzen && !confirm("Alle Übungen, Videos und das Protokoll auf diesem Gerät werden gelöscht und durch die Sicherung ersetzt. Fortfahren?")) return;
+    const ergebnis = await importieren(JSON.parse(await datei.text()), { ersetzen });
     $("dlgMehr").close();
     await neuLaden();
     melden(`${ergebnis.uebungen} Übungen, ${ergebnis.videos} Videos importiert.`
+      + (ergebnis.einstellungen ? " Auswahl übernommen." : "")
       + (ergebnis.ohneDatei ? ` ${ergebnis.ohneDatei} Videodatei(en) fehlen.` : ""));
   } catch (fehler) {
     melden("Import fehlgeschlagen: " + fehler.message);

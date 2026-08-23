@@ -405,10 +405,14 @@
         <button type="button" id="btnExport">Exportieren</button>
         <button type="button" id="btnImport">Importieren</button>
       </div>
+      <label class="kasten" style="margin-top:8px">
+        <input type="checkbox" id="fImportErsetzen">
+        beim Importieren vorhandene Daten ersetzen
+      </label>
       <!-- Auch die Endung erlauben: Android vergibt Dateien aus Mail oder Messenger
            oft den Typ application/octet-stream, sie wären sonst nicht auswählbar. -->
       <input type="file" id="fImport" accept=".json,application/json" hidden>
-      <div class="hilfe">Sichert Übungstexte und Workouts als JSON. Videos sind nicht enthalten — die liegen als Blobs in der Datenbank und müssen separat gesichert werden.</div>
+      <div class="hilfe">Ohne Haken werden die Daten zusammengeführt: Gleiches wird überschrieben, zusätzlich Vorhandenes bleibt stehen. Mit Haken wird der hiesige Bestand vorher gelöscht — das macht dieses Gerät zur exakten Kopie der Sicherung. Sichert Übungen, Videolinks, Auswahl, Workouts und Protokoll als JSON. Videos sind nicht enthalten — die liegen als Blobs in der Datenbank und müssen separat gesichert werden.</div>
     </div>
   </div>
 </dialog>

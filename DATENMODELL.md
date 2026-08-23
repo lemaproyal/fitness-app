@@ -81,9 +81,32 @@ Ein Eintrag verweist per `uebungId` auf den Katalog und darf die Vorgaben der
 unterschiedlichen Sätzen stehen. `workouts.mitUebungen(id)` löst die Verweise auf
 und liefert die vollständigen Übungsobjekte mit.
 
+## `einstellungen`
+
+Schlüssel/Wert-Paare. Die Trainingsansicht legt hier drei Sorten ab:
+
+| Schlüssel | Wert |
+|---|---|
+| `laufendesTraining` | `{ tag, startMs }` — die gestoppte Einheit, oder `null` |
+| `auswahl-A`, `auswahl-B` | `{ "Jump 1": ["box-jumps"], … }` — was heute drankommt |
+| `werte-A`, `werte-B` | `{ "Brust::cable": { saetze, wiederholungen, gewichtKg, dauerSek, notiz }, … }` |
+
+Geschlüsselt wird nach `Bereich::uebungId`, nicht nach `uebungId` allein:
+Dieselbe Plyometrie-Übung kann in Jump 1 und Jump 3 stehen und dort mit
+unterschiedlichen Werten gefahren werden.
+
+`laufendesTraining` bleibt bei der Sicherung außen vor, Auswahl und Werte
+wandern mit.
+
 ## `protokoll`
 
-Ein Eintrag pro Trainingseinheit mit einem Array absolvierter Sätze.
+Ein Eintrag pro Trainingseinheit mit einem Array absolvierter Sätze. Beim
+Beenden werden die erfassten Werte aufgefächert: `saetze: 4` erzeugt vier
+Einträge mit `satzNr` 1–4 und jeweils denselben Wiederholungen und Gewichten.
+Ohne eingetragene Satzzahl bleibt es bei einem Satz je gewählter Übung. Die
+freien Notizen der einzelnen Übungen werden an `notiz` des Eintrags angehängt —
+das Satzobjekt hat kein Textfeld, und `protokoll.eintragen()` würde eines
+verwerfen.
 `protokoll.verlauf(uebungId)` liefert alle Sätze einer Übung chronologisch —
 das ist die Datengrundlage für spätere Verlaufsgrafiken.
 

@@ -420,6 +420,9 @@ export const einstellungen = {
   schreiben(schluessel, wert) {
     return transaktion("einstellungen", "readwrite", s => anfrage(s.put({ schluessel, wert })));
   },
+  alle() {
+    return transaktion("einstellungen", "readonly", s => anfrage(s.getAll()));
+  },
 };
 
 // -------------------------------------------------------------- Speicher
@@ -457,9 +460,13 @@ export async function speicherInfo() {
  * sprengen jede Datei. Für die gehört das Original auf einen zweiten Datenträger.
  */
 export async function exportieren() {
-  const [alleUebungen, alleWorkouts, allesProtokoll, medienMeta] = await Promise.all([
-    uebungen.alle(), workouts.alle(), protokoll.alle(), medien.uebersicht(),
+  const [alleUebungen, alleWorkouts, allesProtokoll, medienMeta, gespeicherteWerte] = await Promise.all([
+    uebungen.alle(), workouts.alle(), protokoll.alle(), medien.uebersicht(), einstellungen.alle(),
   ]);
+
+  // Ein laufendes Training gehört nicht in eine Sicherung — auf einem anderen
+  // Gerät stünde dort eine Uhr, die nie gestartet wurde.
+  const werte = gespeicherteWerte.filter(e => e.schluessel !== "laufendesTraining");
 
   // Verlinkte Videos (YouTube und Direktlinks) sind reine Textdaten und wandern
   // vollständig mit. Selbst hochgeladene Dateien nicht — die stecken als Blob in
@@ -478,6 +485,7 @@ export async function exportieren() {
     protokoll: allesProtokoll,
     medien: medienMeta,
     medienMetadaten: medienMeta, // alter Feldname, damit ältere Sicherungen lesbar bleiben
+    einstellungen: werte,        // enthält vor allem die Übungsauswahl je Trainingstag
   };
 }
 
@@ -518,10 +526,18 @@ export async function importieren(sicherung, { ersetzen = false } = {}) {
     videos++;
   }
 
+  let werte = 0;
+  for (const e of sicherung.einstellungen ?? []) {
+    if (!e?.schluessel || e.schluessel === "laufendesTraining") continue;
+    await einstellungen.schreiben(e.schluessel, e.wert);
+    werte++;
+  }
+
   return {
     uebungen: (sicherung.uebungen ?? []).length,
     workouts: (sicherung.workouts ?? []).length,
     videos,
     ohneDatei,
+    einstellungen: werte,
   };
 }

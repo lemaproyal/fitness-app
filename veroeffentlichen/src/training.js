@@ -29,9 +29,11 @@ const tag = tagNach(tagId) ?? TAGE[0];
 
 const SITZUNG = "laufendesTraining";
 const AUSWAHL = `auswahl-${tag.id}`;
+const WERTE = `werte-${tag.id}`;
 
 let sitzung = null;          // { tag, startMs }
 let auswahl = {};            // { "Jump 1": ["box-jumps"], … }
+let werte = {};              // { "Brust::cable": { saetze: 3, wiederholungen: 10, … } }
 let nachKategorie = new Map();
 let uhrLaeuft = null;
 let offen = null;            // "Bereichsname::uebungId"
@@ -91,11 +93,31 @@ async function trainingBeenden() {
   const dauerSek = Math.round((Date.now() - sitzung.startMs) / 1000);
   const gewaehlt = alleGewaehlten();
 
+  // Ein Eintrag je Satz — die Form, die protokoll.verlauf() für spätere
+  // Auswertungen erwartet. Ohne eingetragene Satzzahl bleibt es bei einem Satz.
   await protokoll.eintragen({
     tag: tag.id,
     dauerSek,
-    saetze: gewaehlt.map(g => ({ uebungId: g.uebungId })),
-    notiz: `${gewaehlt.length} ${gewaehlt.length === 1 ? "Übung" : "Übungen"}`,
+    saetze: gewaehlt.flatMap(g => {
+      const w = werteVon(g.bereich, g.uebungId);
+      const anzahl = Math.min(Math.max(Math.round(w.saetze ?? 1), 1), 30);
+      return Array.from({ length: anzahl }, (_, i) => ({
+        uebungId: g.uebungId,
+        satzNr: i + 1,
+        wiederholungen: w.wiederholungen ?? null,
+        gewichtKg: w.gewichtKg ?? null,
+        dauerSek: w.dauerSek ?? null,
+      }));
+    }),
+    // Die Notizen der einzelnen Übungen gehören mit ins Protokoll — sonst wären
+    // sie beim nächsten Training überschrieben und für immer weg.
+    notiz: [
+      `${gewaehlt.length} ${gewaehlt.length === 1 ? "Übung" : "Übungen"}`,
+      ...gewaehlt.map(g => {
+        const text = werteVon(g.bereich, g.uebungId).notiz;
+        return text ? `${uebungNach(g.uebungId)?.name ?? g.uebungId}: ${text}` : null;
+      }).filter(Boolean),
+    ].join(" — "),
   });
   await einstellungen.schreiben(SITZUNG, null);
 
@@ -150,7 +172,119 @@ async function auswahlUmschalten(bereich, id) {
   if (i >= 0) liste.splice(i, 1); else liste.push(id);
   auswahl[bereich] = liste;
   await einstellungen.schreiben(AUSWAHL, auswahl);
-  zeichnen();
+  auswahlAnzeigen();
+}
+
+/**
+ * Nur Häkchen, Zähler und Fortschritt nachziehen — die Liste bleibt stehen.
+ * Ein vollständiger Neuaufbau würde ein laufendes Video abreißen und halb
+ * getippte Werte aus den Feldern werfen.
+ */
+function auswahlAnzeigen() {
+  for (const el of document.querySelectorAll(".uebung")) {
+    const gewaehlt = istGewaehlt(el.dataset.bereich, el.dataset.id);
+    el.classList.toggle("gewaehlt", gewaehlt);
+    el.querySelector(".waehlen")?.setAttribute("aria-pressed", String(gewaehlt));
+  }
+  for (const el of document.querySelectorAll(".bereich")) {
+    const anzahl = el.querySelectorAll(".uebung.gewaehlt").length;
+    const zaehler = el.querySelector(".zaehler");
+    if (!zaehler) continue;
+    zaehler.textContent = anzahl ? `${anzahl} gewählt` : "offen";
+    zaehler.classList.toggle("aktiv", !!anzahl);
+  }
+  fortschrittZeigen();
+}
+
+// ------------------------------------------------------------------- Werte
+
+/**
+ * Sätze, Wiederholungen, Gewicht, Dauer und eine freie Notiz je Übung.
+ * Wird pro Trainingstag
+ * gespeichert und beim nächsten Öffnen wieder angezeigt — so sieht man, womit
+ * man zuletzt gearbeitet hat. Geschlüsselt wie die Auswahl nach Bereich, denn
+ * dieselbe Übung kann in Jump 1 und Jump 3 mit anderen Werten stehen.
+ */
+const FELDER = [
+  { feld: "saetze",         name: "Sätze",   einheit: "",   schritt: "1"   },
+  { feld: "wiederholungen", name: "WDH",     einheit: "",   schritt: "1"   },
+  { feld: "gewichtKg",      name: "Gewicht", einheit: "kg", schritt: "0.5" },
+  { feld: "dauerSek",       name: "Dauer",   einheit: "s",  schritt: "1"   },
+];
+
+const werteVon = (bereich, id) => werte[`${bereich}::${id}`] ?? {};
+const uebungNach = id => [...nachKategorie.values()].flat().find(u => u.id === id);
+
+function werteMerken(bereich, id, feld, roh) {
+  const schluessel = `${bereich}::${id}`;
+  const eintrag = { ...werteVon(bereich, id) };
+
+  if (feld === "notiz") {
+    // Zeilenumbrüche bleiben erhalten, nur außen wird gekürzt.
+    const text = String(roh).replace(/\s+$/, "");
+    if (text.trim() === "") delete eintrag.notiz;
+    else eintrag.notiz = text;
+  } else {
+    const zahl = Number(String(roh).replace(",", "."));
+    if (String(roh).trim() === "" || !Number.isFinite(zahl) || zahl < 0) delete eintrag[feld];
+    else eintrag[feld] = zahl;
+  }
+
+  if (Object.keys(eintrag).length) werte[schluessel] = eintrag;
+  else delete werte[schluessel];
+
+  werteSichern();
+}
+
+// Beim Tippen nicht bei jedem Zeichen in die Datenbank schreiben.
+let speicherUhr = null;
+function werteSichern() {
+  clearTimeout(speicherUhr);
+  speicherUhr = setTimeout(werteJetztSichern, 400);
+}
+function werteJetztSichern() {
+  clearTimeout(speicherUhr);
+  return einstellungen.schreiben(WERTE, werte);
+}
+
+/** Kurzfassung für die zugeklappte Zeile — leer, solange nichts erfasst ist. */
+function werteText(bereich, id) {
+  const w = werteVon(bereich, id);
+  const z = n => Number(n).toLocaleString("de-DE", { maximumFractionDigits: 2 });
+  const teile = [];
+  if (w.saetze && w.wiederholungen) teile.push(`${z(w.saetze)} × ${z(w.wiederholungen)}`);
+  else if (w.saetze) teile.push(`${z(w.saetze)} ${w.saetze === 1 ? "Satz" : "Sätze"}`);
+  else if (w.wiederholungen) teile.push(`${z(w.wiederholungen)} WDH`);
+  if (w.gewichtKg) teile.push(`${z(w.gewichtKg)} kg`);
+  if (w.dauerSek) teile.push(`${z(w.dauerSek)} s`);
+  return teile.join(" · ");
+}
+
+/**
+ * Die vier Zahlenfelder, darunter das freie Notizfeld. Die Standardvorgaben der
+ * Übung stehen als Platzhalter in den Zahlenfeldern — sichtbar, aber nicht
+ * mitgespeichert.
+ */
+function werteFelder(bereich, u) {
+  const w = werteVon(bereich, u.id);
+  const s = u.standard ?? {};
+  return `
+    <div class="werte" role="group" aria-label="Werte für ${esc(u.name)}">
+      ${FELDER.map(f => `
+        <label>
+          <span>${f.name}${f.einheit ? ` <i>${f.einheit}</i>` : ""}</span>
+          <input type="number" min="0" step="${f.schritt}"
+                 inputmode="${f.schritt === "1" ? "numeric" : "decimal"}"
+                 data-feld="${f.feld}" value="${w[f.feld] ?? ""}"
+                 placeholder="${s[f.feld] ?? "–"}">
+        </label>`).join("")}
+    </div>
+    <label class="tagesnotiz">
+      <span>Notiz</span>
+      <textarea rows="2" data-feld="notiz"
+                placeholder="z. B. Sitz 4, links schwächer, nächstes Mal 25 kg"
+                >${esc(w.notiz ?? "")}</textarea>
+    </label>`;
 }
 
 // ----------------------------------------------------------------- Anzeige
@@ -162,13 +296,7 @@ async function laden() {
     nachKategorie.set(kat, alle.filter(u => u.kategorie === kat));
   }
   auswahl = (await einstellungen.lesen(AUSWAHL)) ?? {};
-}
-
-function vorgabeText(u) {
-  const s = u.standard ?? {};
-  if (u.messtyp === "zeit" && s.dauerSek) return `${s.saetze} × ${s.dauerSek} s`;
-  if (s.saetze && s.wiederholungen) return `${s.saetze} × ${s.wiederholungen}`;
-  return s.saetze ? `${s.saetze} Sätze` : "";
+  werte = (await einstellungen.lesen(WERTE)) ?? {};
 }
 
 function uebungZeichnen(u, bereich) {
@@ -182,7 +310,7 @@ function uebungZeichnen(u, bereich) {
                 aria-pressed="${gewaehlt}" aria-label="Für heute auswählen">✓</button>
         <button type="button" class="oeffnen" data-aktion="oeffnen">
           <span class="titel">${esc(u.name)}</span>
-          <span class="vorgabe">${esc(vorgabeText(u))}</span>
+          <span class="erfasst">${esc(werteText(bereich, u.id))}</span>
           <span class="pfeil">›</span>
         </button>
       </div>
@@ -210,10 +338,14 @@ function bereichZeichnen(bereich, blockNr) {
     </div>`;
 }
 
-function zeichnen() {
+function fortschrittZeigen() {
   const gewaehlt = alleGewaehlten().length;
   $("fortschritt").textContent = gewaehlt
     ? `${gewaehlt} ${gewaehlt === 1 ? "Übung" : "Übungen"} gewählt` : "";
+}
+
+function zeichnen() {
+  fortschrittZeigen();
 
   $("liste").innerHTML = tag.bloecke.map((block, nr) => `
     <section class="block">
@@ -231,6 +363,7 @@ async function detailsFuellen(bereich, u) {
   const m = u.medienId ? await medien.nachId(u.medienId) : null;
 
   halter.innerHTML = `
+    ${werteFelder(bereich, u)}
     ${m ? `<div data-video></div>` : `<div class="kein-video">Kein Video hinterlegt</div>`}
     ${u.ausfuehrung?.length ? `<h4>Ausführung</h4><ol>${u.ausfuehrung.map(s => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}
     ${u.hinweise?.length ? `<h4>Hinweise</h4><ul>${u.hinweise.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
@@ -267,7 +400,7 @@ async function umschalten(bereich, id) {
   zeichnen();
   if (!offen) return;
 
-  const u = [...nachKategorie.values()].flat().find(x => x.id === id);
+  const u = uebungNach(id);
   if (u) await detailsFuellen(bereich, u);
   document.querySelector(`[data-bereich="${CSS.escape(bereich)}"][data-id="${CSS.escape(id)}"]`)
     ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -297,14 +430,31 @@ $("btnVerwerfen").addEventListener("click", trainingVerwerfen);
 $("liste").addEventListener("click", ev => {
   const kachel = ev.target.closest(".uebung");
   if (!kachel) return;
+  // Ein Klick ins Eingabefeld oder aufs Video soll nicht zuklappen.
+  if (ev.target.closest(".details")) return;
   const { bereich, id } = kachel.dataset;
   const aktion = ev.target.closest("[data-aktion]")?.dataset.aktion;
   if (aktion === "waehlen") auswahlUmschalten(bereich, id);
   else umschalten(bereich, id);
 });
 
+$("liste").addEventListener("input", ev => {
+  const feld = ev.target.closest("[data-feld]");
+  const kachel = feld?.closest(".uebung");
+  if (!kachel) return;
+  const { bereich, id } = kachel.dataset;
+  werteMerken(bereich, id, feld.dataset.feld, feld.value);
+  const kurz = kachel.querySelector(".erfasst");
+  if (kurz) kurz.textContent = werteText(bereich, id);
+});
+
 // Kehrt die App aus dem Hintergrund zurück, muss die Uhr sofort stimmen.
-document.addEventListener("visibilitychange", () => { if (!document.hidden) uhrZeichnen(); });
+// Geht sie in den Hintergrund, müssen getippte Werte sofort gesichert sein —
+// womöglich kommt die Seite nie wieder.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) werteJetztSichern();
+  else uhrZeichnen();
+});
 
 serviceWorkerAnmelden();
 
