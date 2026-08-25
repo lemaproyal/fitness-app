@@ -93,20 +93,27 @@ async function trainingBeenden() {
   const dauerSek = Math.round((Date.now() - sitzung.startMs) / 1000);
   const gewaehlt = alleGewaehlten();
 
-  // Ein Eintrag je Satz — die Form, die protokoll.verlauf() für spätere
-  // Auswertungen erwartet. Ohne eingetragene Satzzahl bleibt es bei einem Satz.
+  // Zuletzt Getipptes hängt womöglich noch in der Verzögerung — vor dem
+  // Auslesen einmal sicher wegschreiben, sonst fehlt der letzte Satz.
+  await werteJetztSichern();
+
+  if (!gewaehlt.length &&
+      !confirm("Keine Übung ausgewählt. Trotzdem beenden und nur die Zeit speichern?")) return;
+
+  // Ein Eintrag je erfasstem Satz — genau die Zeilen, die oben stehen. Leere
+  // Zeilen fallen weg; eine Übung ohne jede Zahl bleibt mit einem leeren Satz
+  // im Protokoll, damit sichtbar bleibt, dass sie drankam.
   await protokoll.eintragen({
     tag: tag.id,
     dauerSek,
     saetze: gewaehlt.flatMap(g => {
-      const w = werteVon(g.bereich, g.uebungId);
-      const anzahl = Math.min(Math.max(Math.round(w.saetze ?? 1), 1), 30);
-      return Array.from({ length: anzahl }, (_, i) => ({
+      const erfasst = saetzeVon(g.bereich, g.uebungId).filter(hatWert);
+      return (erfasst.length ? erfasst : [{}]).map((z, i) => ({
         uebungId: g.uebungId,
         satzNr: i + 1,
-        wiederholungen: w.wiederholungen ?? null,
-        gewichtKg: w.gewichtKg ?? null,
-        dauerSek: w.dauerSek ?? null,
+        wiederholungen: z.wiederholungen ?? null,
+        gewichtKg: z.gewichtKg ?? null,
+        dauerSek: z.dauerSek ?? null,
       }));
     }),
     // Die Notizen der einzelnen Übungen gehören mit ins Protokoll — sonst wären
@@ -199,41 +206,117 @@ function auswahlAnzeigen() {
 // ------------------------------------------------------------------- Werte
 
 /**
- * Sätze, Wiederholungen, Gewicht, Dauer und eine freie Notiz je Übung.
- * Wird pro Trainingstag
- * gespeichert und beim nächsten Öffnen wieder angezeigt — so sieht man, womit
- * man zuletzt gearbeitet hat. Geschlüsselt wie die Auswahl nach Bereich, denn
- * dieselbe Übung kann in Jump 1 und Jump 3 mit anderen Werten stehen.
+ * Je Satz eine Zeile: Wiederholungen, Gewicht, Dauer. Dazu eine freie Notiz für
+ * die ganze Übung.
+ *
+ * Getrennte Zeilen, weil sich Sätze unterscheiden — der dritte fällt ab, beim
+ * vierten geht das Gewicht runter. Eine gemeinsame Zeile für alle Sätze konnte
+ * das nicht festhalten.
+ *
+ * Gespeichert wird pro Trainingstag und beim nächsten Öffnen wieder angezeigt —
+ * so sieht man, womit man zuletzt gearbeitet hat. Geschlüsselt wie die Auswahl
+ * nach Bereich, denn dieselbe Übung kann in Jump 1 und Jump 3 mit anderen
+ * Werten stehen.
+ *
+ *   werte["Brust::cable"] = { saetze: [ { wiederholungen, gewichtKg, dauerSek }, … ],
+ *                             notiz: "Sitz auf 4" }
  */
 const FELDER = [
-  { feld: "saetze",         name: "Sätze",   einheit: "",   schritt: "1"   },
   { feld: "wiederholungen", name: "WDH",     einheit: "",   schritt: "1"   },
   { feld: "gewichtKg",      name: "Gewicht", einheit: "kg", schritt: "0.5" },
   { feld: "dauerSek",       name: "Dauer",   einheit: "s",  schritt: "1"   },
 ];
 
+const MAX_SAETZE = 30;
+
 const werteVon = (bereich, id) => werte[`${bereich}::${id}`] ?? {};
+const saetzeVon = (bereich, id) => werteVon(bereich, id).saetze ?? [];
 const uebungNach = id => [...nachKategorie.values()].flat().find(u => u.id === id);
 
-function werteMerken(bereich, id, feld, roh) {
-  const schluessel = `${bereich}::${id}`;
-  const eintrag = { ...werteVon(bereich, id) };
+/** Ein Satz zählt erst, wenn mindestens eine Zahl darin steht. */
+const hatWert = z => FELDER.some(f => z?.[f.feld] != null);
 
-  if (feld === "notiz") {
-    // Zeilenumbrüche bleiben erhalten, nur außen wird gekürzt.
-    const text = String(roh).replace(/\s+$/, "");
-    if (text.trim() === "") delete eintrag.notiz;
-    else eintrag.notiz = text;
-  } else {
-    const zahl = Number(String(roh).replace(",", "."));
-    if (String(roh).trim() === "" || !Number.isFinite(zahl) || zahl < 0) delete eintrag[feld];
-    else eintrag[feld] = zahl;
+const begrenzt = n => Math.min(Math.max(Math.round(Number(n) || 1), 1), MAX_SAETZE);
+
+/**
+ * Ältere Fassungen hielten eine einzige Zeile je Übung, die für alle Sätze galt.
+ * Daraus wird beim Laden je Satz eine eigene Zeile mit denselben Zahlen — so
+ * geht nichts verloren und die neue Ansicht hat vom ersten Öffnen an Inhalt.
+ */
+function werteAngleichen(roh) {
+  const raus = {};
+  for (const [schluessel, alt] of Object.entries(roh ?? {})) {
+    if (Array.isArray(alt?.saetze)) { raus[schluessel] = alt; continue; }
+    const zeile = {};
+    for (const f of FELDER) if (alt?.[f.feld] != null) zeile[f.feld] = alt[f.feld];
+    const eintrag = {
+      saetze: Array.from({ length: begrenzt(alt?.saetze) }, () => ({ ...zeile })),
+    };
+    if (alt?.notiz) eintrag.notiz = alt.notiz;
+    raus[schluessel] = eintrag;
   }
+  return raus;
+}
 
-  if (Object.keys(eintrag).length) werte[schluessel] = eintrag;
+/**
+ * Die Zeilen, die angezeigt werden: das bereits Erfasste — und solange nichts
+ * erfasst ist, so viele leere Zeilen, wie die Übung als Vorgabe mitbringt.
+ */
+function zeilenVon(bereich, u) {
+  const vorhanden = saetzeVon(bereich, u.id);
+  if (vorhanden.length) return vorhanden;
+  return Array.from({ length: begrenzt(u.standard?.saetze ?? 3) }, () => ({}));
+}
+
+/** Schreibt den Eintrag zurück — oder räumt ihn weg, wenn nichts übrig bleibt. */
+function eintragMerken(bereich, id, eintrag) {
+  const schluessel = `${bereich}::${id}`;
+  if (eintrag.saetze?.length || eintrag.notiz) werte[schluessel] = eintrag;
   else delete werte[schluessel];
-
   werteSichern();
+}
+
+function satzMerken(bereich, id, nr, feld, roh) {
+  const eintrag = { ...werteVon(bereich, id) };
+  const liste = (eintrag.saetze ?? []).map(z => ({ ...z }));
+  while (liste.length <= nr) liste.push({});
+
+  const zahl = Number(String(roh).replace(",", "."));
+  if (String(roh).trim() === "" || !Number.isFinite(zahl) || zahl < 0) delete liste[nr][feld];
+  else liste[nr][feld] = zahl;
+
+  eintrag.saetze = liste;
+  eintragMerken(bereich, id, eintrag);
+}
+
+function notizMerken(bereich, id, roh) {
+  const eintrag = { ...werteVon(bereich, id) };
+  // Zeilenumbrüche bleiben erhalten, nur außen wird gekürzt.
+  const text = String(roh).replace(/\s+$/, "");
+  if (text.trim() === "") delete eintrag.notiz;
+  else eintrag.notiz = text;
+  eintragMerken(bereich, id, eintrag);
+}
+
+/**
+ * Ein Satz mehr — mit den Zahlen des vorherigen vorbelegt. Von Satz zu Satz
+ * ändert sich meist nur eine Zahl, und die tippt sich schneller als drei.
+ */
+function satzHinzufuegen(bereich, u) {
+  const liste = zeilenVon(bereich, u).map(z => ({ ...z }));
+  if (liste.length >= MAX_SAETZE) return melden(`Mehr als ${MAX_SAETZE} Sätze gehen nicht.`);
+  liste.push({ ...(liste.at(-1) ?? {}) });
+  eintragMerken(bereich, u.id, { ...werteVon(bereich, u.id), saetze: liste });
+  saetzeNeuZeichnen(bereich, u);
+}
+
+/** Die letzte Zeile bleibt stehen — ohne Satz gäbe es nichts zu erfassen. */
+function satzEntfernen(bereich, u, nr) {
+  const liste = zeilenVon(bereich, u).map(z => ({ ...z }));
+  if (liste.length < 2) return;
+  liste.splice(nr, 1);
+  eintragMerken(bereich, u.id, { ...werteVon(bereich, u.id), saetze: liste });
+  saetzeNeuZeichnen(bereich, u);
 }
 
 // Beim Tippen nicht bei jedem Zeichen in die Datenbank schreiben.
@@ -249,42 +332,88 @@ function werteJetztSichern() {
 
 /** Kurzfassung für die zugeklappte Zeile — leer, solange nichts erfasst ist. */
 function werteText(bereich, id) {
-  const w = werteVon(bereich, id);
+  const zeilen = saetzeVon(bereich, id).filter(hatWert);
+  if (!zeilen.length) return "";
   const z = n => Number(n).toLocaleString("de-DE", { maximumFractionDigits: 2 });
-  const teile = [];
-  if (w.saetze && w.wiederholungen) teile.push(`${z(w.saetze)} × ${z(w.wiederholungen)}`);
-  else if (w.saetze) teile.push(`${z(w.saetze)} ${w.saetze === 1 ? "Satz" : "Sätze"}`);
-  else if (w.wiederholungen) teile.push(`${z(w.wiederholungen)} WDH`);
-  if (w.gewichtKg) teile.push(`${z(w.gewichtKg)} kg`);
-  if (w.dauerSek) teile.push(`${z(w.dauerSek)} s`);
+
+  // Bleibt eine Zahl über alle Sätze gleich, steht sie einmal da; ändert sie
+  // sich, zeigt die Spanne den Verlauf vom ersten zum letzten Satz — "4 × 12–8"
+  // sagt mehr als eine Liste und passt auch am Handy in die Zeile.
+  const spanne = feld => {
+    const zahlen = zeilen.map(x => x[feld]).filter(v => v != null);
+    if (!zahlen.length) return null;
+    return zahlen.every(v => v === zahlen[0])
+      ? z(zahlen[0]) : `${z(zahlen[0])}–${z(zahlen.at(-1))}`;
+  };
+
+  const wdh = spanne("wiederholungen");
+  const kg = spanne("gewichtKg");
+  const dauer = spanne("dauerSek");
+
+  const teile = [wdh ? `${zeilen.length} × ${wdh}`
+                     : `${zeilen.length} ${zeilen.length === 1 ? "Satz" : "Sätze"}`];
+  if (kg) teile.push(`${kg} kg`);
+  if (dauer) teile.push(`${dauer} s`);
   return teile.join(" · ");
 }
 
 /**
- * Die vier Zahlenfelder, darunter das freie Notizfeld. Die Standardvorgaben der
- * Übung stehen als Platzhalter in den Zahlenfeldern — sichtbar, aber nicht
- * mitgespeichert.
+ * Eine Zeile je Satz. Die Standardvorgaben der Übung stehen als Platzhalter in
+ * den Feldern — sichtbar, aber nicht mitgespeichert. Was leer bleibt, bleibt leer.
  */
-function werteFelder(bereich, u) {
-  const w = werteVon(bereich, u.id);
+function saetzeFelder(bereich, u) {
+  const zeilen = zeilenVon(bereich, u);
   const s = u.standard ?? {};
+  const einzeln = zeilen.length < 2;
+
   return `
-    <div class="werte" role="group" aria-label="Werte für ${esc(u.name)}">
-      ${FELDER.map(f => `
-        <label>
-          <span>${f.name}${f.einheit ? ` <i>${f.einheit}</i>` : ""}</span>
-          <input type="number" min="0" step="${f.schritt}"
-                 inputmode="${f.schritt === "1" ? "numeric" : "decimal"}"
-                 data-feld="${f.feld}" value="${w[f.feld] ?? ""}"
-                 placeholder="${s[f.feld] ?? "–"}">
-        </label>`).join("")}
-    </div>
+    <div class="saetze" data-saetze role="group" aria-label="Sätze für ${esc(u.name)}">
+      <div class="satz-kopf" aria-hidden="true">
+        <span></span>
+        ${FELDER.map(f => `<span>${f.name}${f.einheit ? ` <i>${f.einheit}</i>` : ""}</span>`).join("")}
+        <span></span>
+      </div>
+      ${zeilen.map((zeile, nr) => `
+        <div class="satz" data-satz="${nr}">
+          <span class="nr">${nr + 1}</span>
+          ${FELDER.map(f => `
+            <input type="number" min="0" step="${f.schritt}"
+                   inputmode="${f.schritt === "1" ? "numeric" : "decimal"}"
+                   aria-label="${f.name}, Satz ${nr + 1}"
+                   data-feld="${f.feld}" value="${zeile[f.feld] ?? ""}"
+                   placeholder="${s[f.feld] ?? "–"}">`).join("")}
+          <button type="button" class="satz-weg" data-aktion="satz-weg"
+                  aria-label="Satz ${nr + 1} entfernen" ${einzeln ? "hidden" : ""}>✕</button>
+        </div>`).join("")}
+      <button type="button" class="satz-mehr" data-aktion="satz-mehr">+ Satz</button>
+    </div>`;
+}
+
+function notizFeld(bereich, u) {
+  return `
     <label class="tagesnotiz">
       <span>Notiz</span>
       <textarea rows="2" data-feld="notiz"
                 placeholder="z. B. Sitz 4, links schwächer, nächstes Mal 25 kg"
-                >${esc(w.notiz ?? "")}</textarea>
+                >${esc(werteVon(bereich, u.id).notiz ?? "")}</textarea>
     </label>`;
+}
+
+/**
+ * Zeichnet nur den Satzblock neu — die Details drumherum bleiben stehen, damit
+ * ein laufendes Video beim Hinzufügen eines Satzes nicht abreißt.
+ */
+function saetzeNeuZeichnen(bereich, u) {
+  const halter = document.querySelector(
+    `[data-details="${CSS.escape(bereich + "::" + u.id)}"] [data-saetze]`);
+  if (halter) halter.outerHTML = saetzeFelder(bereich, u);
+  kurzfassungZeigen(bereich, u.id);
+}
+
+function kurzfassungZeigen(bereich, id) {
+  const kurz = document.querySelector(
+    `.uebung[data-bereich="${CSS.escape(bereich)}"][data-id="${CSS.escape(id)}"] .erfasst`);
+  if (kurz) kurz.textContent = werteText(bereich, id);
 }
 
 // ----------------------------------------------------------------- Anzeige
@@ -296,7 +425,7 @@ async function laden() {
     nachKategorie.set(kat, alle.filter(u => u.kategorie === kat));
   }
   auswahl = (await einstellungen.lesen(AUSWAHL)) ?? {};
-  werte = (await einstellungen.lesen(WERTE)) ?? {};
+  werte = werteAngleichen(await einstellungen.lesen(WERTE));
 }
 
 function uebungZeichnen(u, bereich) {
@@ -363,7 +492,8 @@ async function detailsFuellen(bereich, u) {
   const m = u.medienId ? await medien.nachId(u.medienId) : null;
 
   halter.innerHTML = `
-    ${werteFelder(bereich, u)}
+    ${saetzeFelder(bereich, u)}
+    ${notizFeld(bereich, u)}
     ${m ? `<div data-video></div>` : `<div class="kein-video">Kein Video hinterlegt</div>`}
     ${u.ausfuehrung?.length ? `<h4>Ausführung</h4><ol>${u.ausfuehrung.map(s => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}
     ${u.hinweise?.length ? `<h4>Hinweise</h4><ul>${u.hinweise.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
@@ -430,10 +560,21 @@ $("btnVerwerfen").addEventListener("click", trainingVerwerfen);
 $("liste").addEventListener("click", ev => {
   const kachel = ev.target.closest(".uebung");
   if (!kachel) return;
-  // Ein Klick ins Eingabefeld oder aufs Video soll nicht zuklappen.
-  if (ev.target.closest(".details")) return;
   const { bereich, id } = kachel.dataset;
   const aktion = ev.target.closest("[data-aktion]")?.dataset.aktion;
+
+  // Die Satzknöpfe stecken in den Details und müssen vor der Sperre darunter
+  // drankommen — sonst würde ein Klick dort nur zuklappen.
+  if (aktion === "satz-mehr" || aktion === "satz-weg") {
+    const u = uebungNach(id);
+    if (!u) return;
+    if (aktion === "satz-mehr") satzHinzufuegen(bereich, u);
+    else satzEntfernen(bereich, u, Number(ev.target.closest("[data-satz]")?.dataset.satz));
+    return;
+  }
+
+  // Ein Klick ins Eingabefeld oder aufs Video soll nicht zuklappen.
+  if (ev.target.closest(".details")) return;
   if (aktion === "waehlen") auswahlUmschalten(bereich, id);
   else umschalten(bereich, id);
 });
@@ -443,9 +584,10 @@ $("liste").addEventListener("input", ev => {
   const kachel = feld?.closest(".uebung");
   if (!kachel) return;
   const { bereich, id } = kachel.dataset;
-  werteMerken(bereich, id, feld.dataset.feld, feld.value);
-  const kurz = kachel.querySelector(".erfasst");
-  if (kurz) kurz.textContent = werteText(bereich, id);
+  const zeile = feld.closest("[data-satz]");
+  if (zeile) satzMerken(bereich, id, Number(zeile.dataset.satz), feld.dataset.feld, feld.value);
+  else notizMerken(bereich, id, feld.value);
+  kurzfassungZeigen(bereich, id);
 });
 
 // Kehrt die App aus dem Hintergrund zurück, muss die Uhr sofort stimmen.

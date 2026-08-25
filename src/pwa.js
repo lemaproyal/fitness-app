@@ -19,20 +19,55 @@ export function serviceWorkerAnmelden({ beiUpdate } = {}) {
 
   return navigator.serviceWorker.register("./sw.js", { scope: "./" })
     .then(anmeldung => {
+      // Hatte die Seite beim Start schon einen Controller, ist jede weitere
+      // Fassung eine Aktualisierung — sonst ist es die Erstinstallation, und
+      // dafür gibt es nichts zu melden.
+      const warSchonInstalliert = !!navigator.serviceWorker.controller;
+      let gemeldet = false;
+
+      function melden() {
+        if (gemeldet || !warSchonInstalliert || !beiUpdate) return;
+        gemeldet = true;
+        beiUpdate(() => {
+          // Der wartende Arbeiter soll sofort übernehmen; danach neu laden,
+          // damit die Seite den neuen Programmcode bekommt. Das Zeitlimit ist
+          // die Rückfallebene, falls niemand mehr wartet.
+          navigator.serviceWorker.addEventListener("controllerchange",
+            () => location.reload(), { once: true });
+          anmeldung.waiting?.postMessage("uebernehmen");
+          setTimeout(() => location.reload(), 1500);
+        });
+      }
+
+      // Drei Wege führen zu einer neuen Fassung, und je nach Gerät greift ein
+      // anderer: eine, die beim Öffnen schon bereitsteht; eine, die gerade
+      // installiert wird; und eine, die sich bereits selbst übernommen hat.
+      if (anmeldung.waiting) melden();
+
       anmeldung.addEventListener("updatefound", () => {
         const neuer = anmeldung.installing;
-        if (!neuer) return;
-        neuer.addEventListener("statechange", () => {
-          // "installed" bei vorhandenem Controller heißt: Es liegt eine neue
-          // Fassung bereit, die alte läuft noch.
-          if (neuer.state === "installed" && navigator.serviceWorker.controller) {
-            beiUpdate?.(() => {
-              neuer.postMessage("uebernehmen");
-              navigator.serviceWorker.addEventListener("controllerchange", () => location.reload(), { once: true });
-            });
-          }
+        neuer?.addEventListener("statechange", () => {
+          if (neuer.state === "installed" || neuer.state === "activated") melden();
         });
       });
+
+      navigator.serviceWorker.addEventListener("controllerchange", melden);
+
+      // Der entscheidende Punkt am Handy: Eine installierte App wird aus dem
+      // Hintergrund geholt statt neu geladen. Ohne Seitenaufruf fragt der
+      // Browser von sich aus nie nach einer neuen Fassung — dann bliebe das
+      // Handy beliebig lange auf dem alten Stand. Also selbst nachsehen, beim
+      // Start und jedes Mal, wenn die App wieder nach vorn kommt.
+      let zuletztGeprueft = 0;
+      const nachsehen = () => {
+        if (Date.now() - zuletztGeprueft < 30_000) return;
+        zuletztGeprueft = Date.now();
+        anmeldung.update().catch(() => { /* kein Netz — beim nächsten Mal */ });
+      };
+
+      nachsehen();
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) nachsehen(); });
+
       return { moeglich: true, anmeldung };
     })
     .catch(fehler => ({ moeglich: false, grund: fehler.message }));

@@ -134,31 +134,47 @@
   .details ol, .details ul { margin: 0; padding-left: 1.15em; }
   .details li { margin-bottom: 4px; font-size: 0.93rem; }
   .details ul li { color: var(--muted); }
-  /* ---------- Werte erfassen (steht über dem Video) ---------- */
-  .werte {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
-    margin-bottom: 7px;
+  /* ---------- Sätze erfassen: eine Zeile je Satz, über dem Video ---------- */
+  .saetze { margin-bottom: 10px; }
+  .satz-kopf, .satz {
+    display: grid; grid-template-columns: 1.4rem repeat(3, 1fr) 1.7rem;
+    gap: 6px; align-items: center;
   }
-  @media (max-width: 400px) { .werte { grid-template-columns: repeat(2, 1fr); } }
-  .werte label {
-    display: flex; flex-direction: column; gap: 3px;
-    font-size: 0.63rem; font-weight: 600; letter-spacing: 0.07em;
+  .satz-kopf {
+    font-size: 0.6rem; font-weight: 600; letter-spacing: 0.07em;
     text-transform: uppercase; color: var(--muted);
+    text-align: center; padding-bottom: 3px;
   }
-  .werte label i { font-style: normal; opacity: 0.7; }
-  .werte input {
+  .satz-kopf i { font-style: normal; opacity: 0.7; }
+  .satz { margin-bottom: 5px; }
+  .satz .nr {
+    font-size: 0.78rem; font-weight: 700; color: var(--muted);
+    text-align: center; font-variant-numeric: tabular-nums;
+  }
+  .satz input {
     font: inherit; font-size: 1.02rem; font-weight: 600; text-align: center;
-    font-variant-numeric: tabular-nums; width: 100%; padding: 9px 4px;
+    font-variant-numeric: tabular-nums; width: 100%; padding: 9px 2px;
     border: 1px solid var(--line); border-radius: 9px;
     background: var(--bg); color: var(--ink); -moz-appearance: textfield;
   }
-  .werte input::-webkit-outer-spin-button,
-  .werte input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .werte input::placeholder { font-weight: 400; opacity: 0.55; }
-  .werte input:focus,
+  .satz input::-webkit-outer-spin-button,
+  .satz input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .satz input::placeholder { font-weight: 400; opacity: 0.5; }
+  .satz input:focus,
   .tagesnotiz textarea:focus {
     outline: 2px solid var(--tagfarbe); outline-offset: -1px; border-color: transparent;
   }
+  .satz-weg {
+    background: none; color: var(--muted); font-weight: 400;
+    padding: 7px 0; font-size: 0.92rem; line-height: 1; border-radius: 7px;
+  }
+  .satz-weg:hover { background: var(--chip); color: var(--accent); }
+  .satz-mehr {
+    width: 100%; margin-top: 2px; background: none; color: var(--muted);
+    font-size: 0.83rem; font-weight: 600; padding: 7px 10px;
+    border: 1px dashed var(--line); border-radius: 9px;
+  }
+  .satz-mehr:hover { border-color: var(--tagfarbe); color: var(--tagfarbe); }
 
   .tagesnotiz {
     display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px;
