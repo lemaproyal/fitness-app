@@ -46,8 +46,16 @@ const blockFeldAktualisieren = () => {
 };
 
 // Von der Startseite kommend ist der Tag schon vorgewählt: verwaltung.html?tag=A
-const tagAusAdresse = new URLSearchParams(location.search).get("tag");
+// Aus einem leeren Bereich heraus die Kategorie: verwaltung.html?kategorie=warmup.
+// Nach Kategorie und nicht nach Tag, weil Warm-Up, Jump, Core und Exit auf beiden
+// Tagen stehen — ein Tagesfilter würde sie auf dem jeweils anderen wegfiltern.
+const adresse = new URLSearchParams(location.search);
+const tagAusAdresse = adresse.get("tag");
 if (TAGE.some(t => t.id === tagAusAdresse)) $("filterTag").value = tagAusAdresse;
+const kategorieAusAdresse = adresse.get("kategorie");
+if (KATEGORIEN.some(k => k.id === kategorieAusAdresse)) {
+  $("filterKategorie").value = kategorieAusAdresse;
+}
 selectFuellen($("fKategorie"), KATEGORIEN);
 selectFuellen($("fMesstyp"), MESSTYPEN);
 $("equipmentListe").innerHTML = EQUIPMENT.map(e => `<option value="${esc(e)}">`).join("");

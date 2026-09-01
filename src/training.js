@@ -1,9 +1,11 @@
 /**
  * Trainingsansicht für einen Tag.
  *
- * Aufbau: drei Blöcke, jeder mit zwei Bereichen (Kraft + Sprung bzw. Rumpf).
- * In jedem Bereich stehen alle Übungen der zugehörigen Kategorie; per Klick
- * wählst du aus, welche davon heute drankommen.
+ * Aufbau: drei Blöcke, in der Regel mit zwei Bereichen (Kraft + Sprung bzw.
+ * Rumpf); Block 1 von Tag A trägt zusätzlich das Warm-Up. In jedem Bereich
+ * stehen alle Übungen der zugehörigen Kategorie; per Klick wählst du aus,
+ * welche davon heute drankommen. Trägt ein Bereich eine `vorgabe`, steht die
+ * empfohlene Satzzahl neben seinem Namen.
  *
  * Die Auswahl wird pro Tag gespeichert und beim nächsten Öffnen wieder
  * angezeigt — Trainingspläne wiederholen sich.
@@ -32,7 +34,7 @@ const AUSWAHL = `auswahl-${tag.id}`;
 const WERTE = `werte-${tag.id}`;
 
 let sitzung = null;          // { tag, startMs }
-let auswahl = {};            // { "Jump 1": ["box-jumps"], … }
+let auswahl = {};            // { "Jump": ["box-jumps"], … }
 let werte = {};              // { "Brust::cable": { saetze: 3, wiederholungen: 10, … } }
 let nachKategorie = new Map();
 let uhrLaeuft = null;
@@ -215,7 +217,7 @@ function auswahlAnzeigen() {
  *
  * Gespeichert wird pro Trainingstag und beim nächsten Öffnen wieder angezeigt —
  * so sieht man, womit man zuletzt gearbeitet hat. Geschlüsselt wie die Auswahl
- * nach Bereich, denn dieselbe Übung kann in Jump 1 und Jump 3 mit anderen
+ * nach Bereich, denn dieselbe Übung kann in Core 1 und Core 3 mit anderen
  * Werten stehen.
  *
  *   werte["Brust::cable"] = { saetze: [ { wiederholungen, gewichtKg, dauerSek }, … ],
@@ -254,6 +256,55 @@ function werteAngleichen(roh) {
     };
     if (alt?.notiz) eintrag.notiz = alt.notiz;
     raus[schluessel] = eintrag;
+  }
+  return raus;
+}
+
+/**
+ * Beide Tage hatten früher drei nummerierte Nebenslots — auf Tag A Jump 1 bis
+ * Jump 3, auf Tag B Core 1 bis Core 3, je einer pro Block. Geblieben ist davon
+ * einer, an den beiden anderen Stellen stehen jetzt andere Kategorien:
+ *
+ *   Tag A   Jump 1–3  →  Jump          (Core und Exit kommen neu dazu)
+ *   Tag B   Core 1–3  →  Core          (Warm-Up, Jump und Exit kommen neu dazu)
+ *
+ * Auswahl und Werte hängen am Bereichsnamen, also würden die alten Einträge
+ * sonst verwaisen. Alle drei Slots wandern deshalb in den verbliebenen Bereich
+ * derselben Kategorie; steht dieselbe Übung mehrfach, gewinnt der zuerst
+ * gespeicherte Eintrag. Die neu hinzugekommenen Bereiche fangen leer an — was
+ * unter „Core 3" lag, waren Rumpfübungen und gehört nicht in einen Ausklang.
+ *
+ * Zurückgeschrieben wird nichts: Die nächste Änderung speichert ohnehin den
+ * ganzen Datensatz und lässt die alten Schlüssel damit fallen.
+ */
+const ALTE_BEREICHE = {
+  A: { "Jump 1": "Jump", "Jump 2": "Jump", "Jump 3": "Jump" },
+  B: { "Core 1": "Core", "Core 2": "Core", "Core 3": "Core" },
+};
+
+/** Bereichsnamen in der Auswahl umschreiben und dabei zusammenführen. */
+function auswahlAngleichen(roh) {
+  const karte = ALTE_BEREICHE[tag.id];
+  if (!karte) return roh ?? {};
+  const raus = {};
+  for (const [name, ids] of Object.entries(roh ?? {})) {
+    const ziel = karte[name] ?? name;
+    raus[ziel] = [...new Set([...(raus[ziel] ?? []), ...ids])];
+  }
+  return raus;
+}
+
+/** Dasselbe für die Werte, deren Schlüssel `Bereich::uebungId` lautet. */
+function bereicheAngleichen(werteRoh) {
+  const karte = ALTE_BEREICHE[tag.id];
+  if (!karte) return werteRoh;
+  const raus = {};
+  for (const [schluessel, wert] of Object.entries(werteRoh)) {
+    const trenner = schluessel.indexOf("::");
+    if (trenner < 0) { raus[schluessel] ??= wert; continue; }
+    const name = schluessel.slice(0, trenner);
+    const ziel = (karte[name] ?? name) + schluessel.slice(trenner);
+    raus[ziel] ??= wert;
   }
   return raus;
 }
@@ -424,8 +475,8 @@ async function laden() {
   for (const kat of tag.kategorien) {
     nachKategorie.set(kat, alle.filter(u => u.kategorie === kat));
   }
-  auswahl = (await einstellungen.lesen(AUSWAHL)) ?? {};
-  werte = werteAngleichen(await einstellungen.lesen(WERTE));
+  auswahl = auswahlAngleichen(await einstellungen.lesen(AUSWAHL));
+  werte = bereicheAngleichen(werteAngleichen(await einstellungen.lesen(WERTE)));
 }
 
 function uebungZeichnen(u, bereich) {
@@ -458,12 +509,13 @@ function bereichZeichnen(bereich, blockNr) {
     <div class="bereich">
       <h3>
         <span>${esc(bereich.name)}</span>
+        ${bereich.vorgabe ? `<span class="vorgabe">(${esc(bereich.vorgabe)})</span>` : ""}
         <span class="zaehler ${anzahl ? "aktiv" : ""}">${anzahl ? `${anzahl} gewählt` : "offen"}</span>
       </h3>
       ${liste.length
         ? liste.map(u => uebungZeichnen(u, bereich.name)).join("")
         : `<p class="bereich-leer">Keine Übung für diesen Bereich —
-             <a href="./verwaltung.html?tag=${esc(tag.id)}">anlegen</a></p>`}
+             <a href="./verwaltung.html?kategorie=${esc(bereich.kategorie)}">anlegen</a></p>`}
     </div>`;
 }
 
