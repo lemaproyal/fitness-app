@@ -58,15 +58,15 @@ seite_abwarten() {
     fi
     sleep 2
   done
-  notiz "Offene Seiten der App: $(curl -s http://localhost:9222/json | grep -o '"url": *"[^"]*"' | tr '
-' ' ')"
+  notiz "Offene Seiten der App: $(curl -s http://localhost:9222/json | grep -o '"url": *"[^"]*"' | tr '\n' ' ')"
   fehler "Seite $datei lädt nicht"
 }
 
 # Wie ein Tipp aufs App-Symbol. Läuft die App schon, kommt sie so nach vorn,
 # statt dass Android ein zweites Fenster öffnet.
 symbol_antippen() {
-  adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER     -n "$PAKET/de.lemaproyal.fitness.MainActivity"
+  adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER \
+    -n "$PAKET/de.lemaproyal.fitness.MainActivity"
 }
 
 app_starten() {
@@ -143,7 +143,7 @@ adb shell ls -l /sdcard/Download/ | tee -a "$PROTOKOLL"
 erwarte "Dateiinhalt" "$(adb shell cat /sdcard/Download/fitness-emulator-test.json | tr -d '\r' || true)" '{"test":true}'
 
 schritt "5. Bestätigungsdialog (confirm) mit OK"
-js "setTimeout(() => { window.dialogAntwort = confirm('Emulator-Test: Dialog sichtbar?'); }, 0); return true" > /dev/null   || fehler "Dialog ließ sich nicht öffnen"
+js "setTimeout(() => { window.dialogAntwort = confirm('Emulator-Test: Dialog sichtbar?'); }, 0); return true" > /dev/null || fehler "Dialog ließ sich nicht öffnen"
 sleep 2
 bild "2-dialog"
 tippen_auf "android:id/button1"
@@ -161,9 +161,9 @@ erwarte "Brücke im YouTube-iframe nicht sichtbar" \
   "$(js 'return typeof window.FitnessAndroid' "$YOUTUBE_HERKUNFT")" '"undefined"'
 
 schritt "7. Dateiauswahl für den Import"
-js "location.href = new URL('verwaltung.html', location.href).href; return true" > /dev/null   || fehler "Wechsel zur Verwaltung gescheitert"
+js "location.href = new URL('verwaltung.html', location.href).href; return true" > /dev/null || fehler "Wechsel zur Verwaltung gescheitert"
 seite_abwarten "verwaltung.html"
-js "document.getElementById('fImport').click(); return true" > /dev/null   || fehler "Import-Feld nicht gefunden"
+js "document.getElementById('fImport').click(); return true" > /dev/null || fehler "Import-Feld nicht gefunden"
 sleep 4
 bild "4-dateiauswahl"
 oben=$(adb shell dumpsys activity activities | grep -m1 "topResumedActivity\|mResumedActivity" | tr -d '\r' || true)
@@ -174,7 +174,7 @@ sleep 2
 
 schritt "8. Export-Knopf der Web-App"
 if neuer_webcode_live; then
-  js "document.getElementById('btnExport').click(); return true" > /dev/null     || fehler "Export-Knopf nicht gefunden"
+  js "document.getElementById('btnExport').click(); return true" > /dev/null || fehler "Export-Knopf nicht gefunden"
   sleep 3
   bild "5-export-knopf"
   meldung=$(js "return document.getElementById('meldung').textContent" || true)
