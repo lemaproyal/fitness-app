@@ -51,13 +51,22 @@ Android SDK installiert sind.
 - [vorher-1-keine-apk.txt](beweise/android-apk/vorher-1-keine-apk.txt) – kein Android-Projekt,
   kein Build, Export nur als Browser-Download
 
-- Emulator-Lauf auf GitHub Actions (Android 14), Run 35739103515 – [protokoll.txt](beweise/android-apk/emulator/protokoll.txt):
+- Emulator-Lauf auf GitHub Actions (Android 14, Test-APK `de.lemaproyal.fitness.test`), Run 35746106408 –
+  [protokoll.txt](beweise/android-apk/emulator/protokoll.txt), jede Prüfung als `OK:`-Zeile:
   - [nachher-1 Start](beweise/android-apk/emulator/1-start.png) – APK zeigt die App von GitHub Pages
-  - [nachher-2 Export](beweise/android-apk/emulator/2-export-meldung.png) – Meldung „In Downloads gespeichert“, Datei in `/sdcard/Download` mit korrektem Inhalt
-  - [nachher-3 Dialog](beweise/android-apk/emulator/3-dialog.png) – `confirm()` mit Titel „Fitness“, Abbrechen liefert `false`
-  - [nachher-4 YouTube](beweise/android-apk/emulator/4-youtube.png) – eingebetteter Player lädt
-  - [nachher-5 Dateiauswahl](beweise/android-apk/emulator/5-dateiauswahl.png) – Import öffnet die Android-Dateiauswahl
-  - [nachher-6 Chrome gelöscht](beweise/android-apk/emulator/6-nach-chrome-loeschen.png) – nach `pm clear com.android.chrome` und Neustart ist die gespeicherte Übung noch da; Datenbank liegt in `app_webview/Default/IndexedDB` der App
+  - Brücke: Antwort `{"id":7,"ok":true,"name":"fitness-emulator-test.json"}`, Datei in `/sdcard/Download` mit korrektem Inhalt
+  - [nachher-2 Dialog](beweise/android-apk/emulator/2-dialog.png) – `confirm()` mit App-Namen als Titel, OK liefert `true`
+  - [nachher-3 YouTube](beweise/android-apk/emulator/3-youtube.png) – eingebetteter Player lädt; im YouTube-iframe ist `FitnessAndroid` `undefined`
+  - [nachher-4 Dateiauswahl](beweise/android-apk/emulator/4-dateiauswahl.png) – Import öffnet die Android-Dateiauswahl
+  - Hintergrundwechsel: Seite erhält `hidden`, dann `visible`, bleibt auf derselben Seite
+  - [nachher-6 Chrome gelöscht](beweise/android-apk/emulator/6-nach-chrome-loeschen.png) – nach `pm clear com.android.chrome`
+    und Neustart ist die gespeicherte Übung noch da (Beweis ist die `OK:`-Zeile; die Startseite zählt Übungen ohne Trainingstag nicht)
+  - **Noch nicht im Emulator belegbar, weil die APK die Live-Seite (main) lädt:** Export-Knopf der Web-App
+    und ausgeblendeter Installationshinweis. Der Test prüft beides automatisch, sobald der neue Web-Code live ist
+    (vorher meldet er „übersprungen“) – nach dem Merge läuft der Workflow auf main und belegt es.
+- Stabilität: Zwei Läufe scheiterten, weil der allererste Seitenaufruf im frisch gestarteten Emulator
+  fehlschlug (Offline-Seite, obwohl Android „online“ meldete). Die App versucht es seitdem einmal still
+  erneut, bevor sie die Offline-Seite zeigt; die Offline-Seite nennt den Fehlergrund.
 - Web-Version lokal (localhost, Browser-Pane): Export im Browser weiter als Blob-Download
   (`fitness-sicherung-2026-09-22.json`), mit `window.FitnessAndroid` stattdessen über die Brücke
   (verwaltung.html und verlauf.html); Installationshinweis im Browser weiter sichtbar, in der APK
