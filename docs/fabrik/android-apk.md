@@ -197,3 +197,15 @@ Nach Runde 4 (zwischen den Läufen): `uiautomator` scheiterte an der WebView-Off
 gescheitert“) → Klick auf den Link per DevTools. Zwei rote Läufe mit derselben App-Version (App verschwand) –
 per logcat als System-Abbruch durch Neustart der Google-Play-Dienste belegt, s. Stabilität.
 
+### Runde 5 (letzte) – Score 3/5 (Android-App 5, Web/Doku 5, Workflow/Tests 3)
+Die Beanstandungen betrafen nur den Neuversuch im Test, nicht App oder Web. Nach der Runde behoben
+(laut Fabrik-Regel ohne weitere Review-Runde, Belege durch die folgenden Läufe):
+- Neuversuch nur, wenn logcat belegt, dass genau die Test-App (`Killing <pid>:de.lemaproyal.fitness.test/…`)
+  wegen der Google-Play-Dienste beendet wurde – nicht bei anderen Apps.
+- Vor jedem Versuch: Flugmodus aus, Testdateien im Download-Ordner entfernt (sonst „… (1).json“).
+- logcat wird bei jedem Abbruch gesichert (`trap … EXIT`), auch ohne `fehler()`.
+- Nach einem Tipp auf „Erneut versuchen“ wartet der Test, bis die Offline-Seite verlassen ist.
+- App (Hinweis Android-Prüfer): verzögertes Neuladen wird beim Absturz der Darstellung abgeräumt.
+Offen, bewusst: Absturz der Darstellung *im Hintergrund* (Weg über onResume) ist nur im Code
+nachvollzogen, nicht im Emulator ausgelöst.
+

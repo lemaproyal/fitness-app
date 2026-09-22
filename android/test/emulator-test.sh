@@ -32,13 +32,23 @@ WEBCODE_PFLICHT="${WEBCODE_PFLICHT:-false}"
 schritt() { echo; echo "== $*" | tee -a "$PROTOKOLL"; }
 notiz()   { echo "$*" | tee -a "$PROTOKOLL"; }
 bild()    { adb exec-out screencap -p > "$AUS/$1.png"; notiz "Screenshot: $1.png"; }
-fehler()  {
-  notiz "FEHLER: $*"; bild "fehler"
-  # Das Android-Protokoll zeigt, ob und warum die App abgestürzt ist.
-  adb logcat -d -b crash > "$AUS/logcat-abstuerze.txt" 2>&1 || true
-  adb logcat -d -t 1500 > "$AUS/logcat.txt" 2>&1 || true
-  exit 1
+fehler()  { notiz "FEHLER: $*"; bild "fehler" || true; exit 1; }
+
+# Bei jedem Abbruch – auch durch set -e ohne fehler() – das Android-Protokoll sichern:
+# Es zeigt, ob und warum die App abgestürzt ist (emulator-lauf.sh wertet es aus).
+logcat_sichern() {
+  local code=$?
+  if [ "$code" -ne 0 ]; then
+    adb logcat -d -b crash > "$AUS/logcat-abstuerze.txt" 2>&1 || true
+    adb logcat -d -t 1500 > "$AUS/logcat.txt" 2>&1 || true
+  fi
 }
+trap logcat_sichern EXIT
+
+# Reste eines abgebrochenen ersten Versuchs (emulator-lauf.sh) entfernen: Flugmodus aus
+# Schritt 12 und Testdateien, die sonst als „… (1).json“ neu angelegt würden.
+adb shell cmd connectivity airplane-mode disable > /dev/null 2>&1 || true
+adb shell 'rm -f /sdcard/Download/fitness-*' > /dev/null 2>&1 || true
 js()      { $CDP "$@"; }
 erwarte() { [ "$2" = "$3" ] || fehler "$1 – erwartet $3, erhalten ${2:-(nichts)}"; notiz "OK: $1"; }
 
@@ -115,6 +125,12 @@ startseite_abwarten() {
       CDP_SEITE="file:///android_asset/offline.html" \
         js "document.querySelector('a').click(); return true" > /dev/null \
         || fehler "„Erneut versuchen“ ließ sich nicht antippen"
+      # Erst weiterzählen, wenn die Offline-Seite verlassen wurde – sonst träfe der
+      # nächste Durchlauf noch dieselbe Seite und verbrauchte einen Tipp doppelt.
+      for _ in $(seq 1 10); do
+        [ -z "$(offline_seite)" ] && break
+        sleep 1
+      done
     fi
     sleep 2
   done

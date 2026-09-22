@@ -235,6 +235,7 @@ public class MainActivity extends Activity {
             // Im Hintergrund erst beim Zurückkommen (onResume): Sonst startete die
             // Darstellung dort sofort neu und könnte gleich wieder beendet werden.
             darstellungAbgestuerzt = true;
+            ansicht.removeCallbacks(neuLaden); // kein reload() mehr auf der toten WebView
             if (imVordergrund) neuAufbauen();
             return true;
         }

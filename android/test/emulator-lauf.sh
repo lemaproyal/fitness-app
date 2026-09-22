@@ -14,7 +14,8 @@ set -uo pipefail
 APK="$1"
 AUS="$2"
 TEST="$(dirname "$0")/emulator-test.sh"
-SYSTEM_ABBRUCH="depends on provider com.google.android.gms.* in dying proc"
+# Nur wenn genau die Test-App so beendet wurde – andere Apps trifft es im Emulator auch.
+SYSTEM_ABBRUCH="Killing [0-9]+:de\.lemaproyal\.fitness\.test/.*depends on provider com\.google\.android\.gms"
 
 bash "$TEST" "$APK" "$AUS" && exit 0
 
