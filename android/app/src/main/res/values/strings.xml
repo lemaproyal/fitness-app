@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fitness</string>
+    <string name="gespeichert">In „Downloads“ gespeichert: %1$s</string>
+    <string name="speichern_fehlgeschlagen">Speichern fehlgeschlagen: %1$s</string>
+    <string name="kein_programm">Kein Programm zum Öffnen gefunden.</string>
+</resources>

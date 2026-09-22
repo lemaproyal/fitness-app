@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ab Android 15 zeichnen Apps sonst unter Status- und Navigationsleiste;
+         die Web-App ist dafür nicht ausgelegt. -->
+    <style name="Thema" parent="Thema.Basis">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

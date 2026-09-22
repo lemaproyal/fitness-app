@@ -1,9 +1,10 @@
 # Fitness-App — Projektübersicht
 
-Alles Wesentliche aus der Entwicklung an einer Stelle. Stand: Service-Worker-Version `v15`.
+Alles Wesentliche aus der Entwicklung an einer Stelle. Stand: Service-Worker-Version `v16`.
 
 - **App:** https://lemaproyal.github.io/fitness-app/
 - **Code bei GitHub:** https://github.com/lemaproyal/fitness-app
+- **Android-App (APK):** https://github.com/lemaproyal/fitness-app/releases/download/apk/fitness.apk — siehe `APK.md`
 - **Projektordner:** `C:\Users\Le Map Royal\Desktop\AI Cloud\FITNESS`
 
 ---
@@ -117,6 +118,7 @@ Bei Vorbelastungen an Knie, Hüfte oder Achillessehne vorher ärztlich abklären
 | `youtube.js` | YouTube-Player hinter der Oberfläche eines `<video>`-Elements |
 | `schnitt.js` | Sequenz markieren per Start/Stopp |
 | `pwa.js` | Service-Worker-Anmeldung, Installation, dauerhafte Speicherung |
+| `datei.js` | Export-Dateien ausgeben: im Browser als Download, in der APK über deren Brücke |
 
 ### Werkzeuge in `werkzeuge/`
 
@@ -134,6 +136,7 @@ node werkzeuge/icons-erzeugen.js   # App-Symbole neu erzeugen
 - `veroeffentlichen/` — was hochgeladen wird, wird vom Paket-Skript gefüllt
 - `anleitung.html` — Ersteinrichtung, `aktualisieren.html` — Update-Routine
 - `DATENMODELL.md` — Details zum Datenbankschema
+- `android/` — Android-Hülle für die APK, gebaut von `.github/workflows/apk.yml`; Anleitung in `APK.md`
 
 ---
 
@@ -298,6 +301,13 @@ pflegen, weil dort trainiert wird.
 **PWA statt nativer App** — kein Java und kein Android SDK auf dem Rechner. Eine
 APK über Bubblewrap oder Capacitor hätte trotzdem erst HTTPS-Hosting gebraucht
 **und** zusätzlich Android Studio.
+
+**Dazu eine APK als Hülle (ab September 2026)** — Anlass: „Browserdaten löschen“ in
+Chrome hatte alle Trainingsdaten der installierten PWA gelöscht. Die APK lädt
+dieselbe Seite von GitHub Pages, hält die Datenbank aber im privaten Speicher der
+App. Gebaut wird sie von GitHub Actions, deshalb weiter kein Java am Rechner. Keine
+Trusted Web Activity (Bubblewrap/PWABuilder): Die nutzt den Speicher von Chrome und
+hätte das Problem nicht gelöst.
 
 **Hosting nötig, nicht optional** — der Service Worker, ohne den es keinen
 Offline-Betrieb gibt, funktioniert nur über **https** oder **localhost**. Über

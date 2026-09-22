@@ -1,0 +1,58 @@
+plugins {
+    id "com.android.application"
+}
+
+// Jeder Build auf GitHub bekommt eine höhere Nummer. Android installiert ein
+// Update nur, wenn die Nummer größer ist als die der installierten Fassung.
+def buildNummer = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
+android {
+    namespace "de.lemaproyal.fitness"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "de.lemaproyal.fitness"
+        // Android 10: ab hier schreibt die App ohne Speicher-Berechtigung in den Download-Ordner.
+        minSdk 29
+        targetSdk 35
+        versionCode buildNummer
+        versionName "1.0.${buildNummer}"
+    }
+
+    signingConfigs {
+        release {
+            // Der Schlüssel kommt aus den GitHub-Secrets (siehe APK.md). Er muss für
+            // immer derselbe bleiben: Eine APK mit anderem Schlüssel lässt sich nur nach
+            // Deinstallation installieren – und die löscht alle Trainingsdaten.
+            def datei = System.getenv("SIGNATUR_DATEI")
+            if (datei) {
+                storeFile file(datei)
+                storeType "pkcs12"
+                storePassword System.getenv("SIGNATUR_PASSWORT")
+                keyAlias "fitness"
+                keyPassword System.getenv("SIGNATUR_PASSWORT")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // Nur für addWebMessageListener: Damit ist die Datei-Brücke ausschließlich für
+    // die eigene Adresse sichtbar, nicht für eingebettete YouTube-Player.
+    implementation "androidx.webkit:webkit:1.12.1"
+}
