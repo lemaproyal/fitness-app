@@ -58,8 +58,14 @@ seite_abwarten() {
   fehler "Seite $datei lädt nicht"
 }
 
+# Wie ein Tipp aufs App-Symbol. Läuft die App schon, kommt sie so nach vorn,
+# statt dass Android ein zweites Fenster öffnet.
+symbol_antippen() {
+  adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER     -n "$PAKET/de.lemaproyal.fitness.MainActivity"
+}
+
 app_starten() {
-  adb shell am start -W -n "$PAKET/de.lemaproyal.fitness.MainActivity" >> "$PROTOKOLL"
+  symbol_antippen >> "$PROTOKOLL"
   devtools_verbinden
   seite_abwarten ""
 }
@@ -176,9 +182,9 @@ js "localStorage.setItem('sichtbarkeit', '');
     return true" > /dev/null
 adb shell input keyevent KEYCODE_HOME
 sleep 1
-# Wie ein Tipp aufs App-Symbol: holt die laufende App zurück, statt ein neues Fenster zu öffnen.
-adb shell monkey -p "$PAKET" -c android.intent.category.LAUNCHER 1 > /dev/null
+symbol_antippen > /dev/null
 sleep 2
+erwarte "dieselbe Seite wie vor dem Wechsel" "$(js 'return location.pathname.endsWith("/verwaltung.html")')" "true"
 erwarte "visibilitychange: hidden, dann visible" "$(js "return localStorage.getItem('sichtbarkeit').trim()")" '"hidden visible"'
 
 schritt "10. Chrome-Daten löschen, App neu starten"
