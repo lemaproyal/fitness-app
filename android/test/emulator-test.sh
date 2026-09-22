@@ -109,8 +109,9 @@ startseite_abwarten() {
 }
 
 # Tippt auf das Element mit diesem Merkmal, z. B. tippen_auf resource-id android:id/button1
-# (OK im Dialog) oder tippen_auf "(text|content-desc)" "Erneut versuchen". Beide Argumente
-# sind Teil eines grep -E-Musters – Sonderzeichen wie . ( + im Wert wären zu maskieren.
+# (OK im Dialog). Beide Argumente sind Teil eines grep -E-Musters – Sonderzeichen wie
+# . ( + im Wert wären zu maskieren. Für Seiteninhalte der WebView nicht geeignet – deren
+# Abbild scheitert oft; dort per DevTools klicken.
 tippen_auf() {
   local grenzen="" versuch
   # Die WebView baut ihren Bedienungshilfen-Baum erst beim ersten Abbild auf – daher
