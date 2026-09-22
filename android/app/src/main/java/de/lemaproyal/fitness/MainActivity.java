@@ -43,11 +43,13 @@ public class MainActivity extends Activity {
     private static final String START_URL = "https://" + APP_HOST + "/fitness-app/";
     private static final String OFFLINE_SEITE = "file:///android_asset/offline.html";
     private static final int ANFRAGE_DATEIAUSWAHL = 1;
+    private static final long NEUER_VERSUCH_NACH_MS = 1500;
 
     private WebView webView;
     private ValueCallback<Uri[]> dateiRueckruf;
     private View vollbildAnsicht;
     private WebChromeClient.CustomViewCallback vollbildRueckruf;
+    private boolean ladenWiederholt;
 
     @Override
     protected void onCreate(Bundle zustand) {
@@ -165,12 +167,25 @@ public class MainActivity extends Activity {
 
         @Override
         public void onReceivedError(WebView ansicht, WebResourceRequest anfrage, WebResourceError fehler) {
+            if (!anfrage.isForMainFrame()) return;
+            // Direkt nach dem Öffnen ist das Netz manchmal noch nicht so weit (im Emulator
+            // belegt). Einmal pro App-Start still neu versuchen, statt gleich „offline“ zu melden.
+            if (!ladenWiederholt) {
+                ladenWiederholt = true;
+                ansicht.setVisibility(View.INVISIBLE); // verbirgt die Fehlerseite der WebView
+                ansicht.postDelayed(ansicht::reload, NEUER_VERSUCH_NACH_MS);
+                return;
+            }
             // Hauptseite nicht ladbar – meist beim allerersten Start ohne Verbindung,
             // solange der Service Worker die App noch nicht zwischengespeichert hat.
             // Der Fehlergrund steht klein auf der Seite – hilft beim Eingrenzen.
-            if (anfrage.isForMainFrame()) {
-                ansicht.loadUrl(OFFLINE_SEITE + "?grund=" + Uri.encode(String.valueOf(fehler.getDescription())));
-            }
+            ansicht.setVisibility(View.VISIBLE);
+            ansicht.loadUrl(OFFLINE_SEITE + "?grund=" + Uri.encode(String.valueOf(fehler.getDescription())));
+        }
+
+        @Override
+        public void onPageCommitVisible(WebView ansicht, String adresse) {
+            if (vollbildAnsicht == null) ansicht.setVisibility(View.VISIBLE);
         }
     }
 
