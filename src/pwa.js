@@ -104,5 +104,7 @@ export function installationBeobachten({ beiVerfuegbar, beiInstalliert } = {}) {
   window.addEventListener("appinstalled", () => { einladung = null; beiInstalliert?.(); });
 
   // display-mode: standalone bedeutet, dass die App vom Startbildschirm läuft.
-  return { bereitsInstalliert: matchMedia("(display-mode: standalone)").matches };
+  // In der Android-App (APK) ist sie ohnehin installiert – erkennbar an deren Brücke.
+  const standalone = matchMedia("(display-mode: standalone)").matches;
+  return { bereitsInstalliert: standalone || "FitnessAndroid" in window };
 }

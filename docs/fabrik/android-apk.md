@@ -39,7 +39,9 @@ Android SDK installiert sind.
 
 ## Fortschritt
 - [x] 1 Station – Worktree angelegt
-- [ ] 2 Montage – gebaut nach Code-Struktur
+- [x] 2 Montage – gebaut nach Code-Struktur (Web: `src/datei.js`; Android: `android/`;
+      Build/Test: `.github/workflows/apk.yml`, `android/test/`). Neue Abhängigkeit nur
+      `androidx.webkit` (Begründung im Plan, Punkt 2).
 - [ ] 3 Qualitätskontrolle – Vorher/Nachher-Beweis
 - [ ] 4 Versand – Review 5/5, übergeben
 

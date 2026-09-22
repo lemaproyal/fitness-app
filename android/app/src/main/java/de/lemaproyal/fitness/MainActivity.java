@@ -1,6 +1,7 @@
 package de.lemaproyal.fitness;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -8,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.JsResult;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -146,6 +148,30 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this, R.string.kein_programm, Toast.LENGTH_SHORT).show();
                 return false;
             }
+        }
+
+        // Eigene Dialoge statt der WebView-Vorgabe, die als Überschrift
+        // „Die Seite https://lemaproyal.github.io meldet:“ zeigt.
+        @Override
+        public boolean onJsAlert(WebView ansicht, String adresse, String text, JsResult ergebnis) {
+            dialog(text, ergebnis, false);
+            return true;
+        }
+
+        @Override
+        public boolean onJsConfirm(WebView ansicht, String adresse, String text, JsResult ergebnis) {
+            dialog(text, ergebnis, true);
+            return true;
+        }
+
+        private void dialog(String text, JsResult ergebnis, boolean mitAbbrechen) {
+            AlertDialog.Builder aufbau = new AlertDialog.Builder(MainActivity.this)
+                    .setTitle(R.string.app_name)
+                    .setMessage(text)
+                    .setPositiveButton(android.R.string.ok, (d, w) -> ergebnis.confirm())
+                    .setOnCancelListener(d -> ergebnis.cancel());
+            if (mitAbbrechen) aufbau.setNegativeButton(android.R.string.cancel, (d, w) -> ergebnis.cancel());
+            aufbau.show();
         }
 
         @Override
