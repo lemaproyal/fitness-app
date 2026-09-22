@@ -96,7 +96,11 @@ startseite_abwarten() {
     if [ -n "$offline" ] && [ "$TIPPS" -lt 3 ]; then
       TIPPS=$((TIPPS + 1))
       notiz "Offline-Seite ($TIPPS. Mal): $offline – tippe „Erneut versuchen“"
-      tippen_auf "(text|content-desc)" "Erneut versuchen"
+      # Über die DevTools statt uiautomator: dessen Abbild scheitert an WebView-Seiten oft
+      # („could not get idle state“). Ein Klick auf den Link ist derselbe Weg wie ein Tipp.
+      CDP_SEITE="file:///android_asset/offline.html" \
+        js "document.querySelector('a').click(); return true" > /dev/null \
+        || fehler "„Erneut versuchen“ ließ sich nicht antippen"
     fi
     sleep 2
   done

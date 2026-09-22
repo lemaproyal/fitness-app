@@ -20,8 +20,11 @@ const [code, iframeHerkunft] = process.argv.slice(2);
 setTimeout(() => { console.error("Zeitlimit: keine Antwort der WebView"); process.exit(1); },
            ZEITLIMIT_MS).unref();
 
+// CDP_SEITE wählt eine andere Seite, etwa die Offline-Seite der App (file:///android_asset/…).
+const SEITE = process.env.CDP_SEITE ?? APP_ADRESSE;
+
 const ziele = await (await fetch("http://localhost:9222/json")).json();
-const seite = ziele.find(z => z.type === "page" && z.url.startsWith(APP_ADRESSE));
+const seite = ziele.find(z => z.type === "page" && z.url.startsWith(SEITE));
 if (!seite) {
   console.error("Keine Seite der App gefunden. Offen:", ziele.map(z => z.url).join(", "));
   process.exit(1);
