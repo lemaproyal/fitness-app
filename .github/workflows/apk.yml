@@ -8,6 +8,7 @@ name: Android-APK
 
 on:
   push:
+    branches: ["**"]   # keine Läufe für Tags
     paths:
       - "android/**"
       - ".github/workflows/apk.yml"
@@ -57,8 +58,16 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Auf main muss der Test den neuen Web-Code sehen (Export-Knopf, Installationshinweis) –
+      # also erst warten, bis GitHub Pages diesen Commit ausliefert.
+      - name: Auf GitHub Pages warten
+        if: github.ref == 'refs/heads/main'
+        run: bash android/test/pages-abwarten.sh
+
       - name: Im Android-Emulator prüfen
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          WEBCODE_PFLICHT: ${{ github.ref == 'refs/heads/main' }}
         with:
           api-level: 34
           target: google_apis
@@ -83,7 +92,9 @@ jobs:
         run: |
           export SIGNATUR_DATEI="$RUNNER_TEMP/signatur.p12"
           if [ -n "$SIGNATUR_BASE64" ]; then
-            echo "$SIGNATUR_BASE64" | base64 -d > "$SIGNATUR_DATEI"
+            # Zeilenumbrüche (auch Windows-) aus dem eingefügten Secret entfernen.
+            printf '%s' "$SIGNATUR_BASE64" | tr -d '
+ ' | base64 -d > "$SIGNATUR_DATEI"
             echo "echt=ja" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Kein Signaturschlüssel hinterlegt (siehe APK.md) – Probelauf mit Wegwerf-Schlüssel, nichts wird veröffentlicht."
@@ -101,7 +112,8 @@ jobs:
             # Ein versehentlich getauschtes Secret ergäbe eine APK, die sich nicht über die
             # installierte legen lässt – Update nur mit Deinstallation, also Datenverlust.
             erwartet=$(tr -d '[:space:]' < android/signatur-fingerabdruck.txt)
-            grep -q "SHA-256 digest: $erwartet" zertifikat.txt \
+            [[ "$erwartet" =~ ^[0-9a-f]{64}$ ]]               || { echo "::error::android/signatur-fingerabdruck.txt enthält keinen gültigen Fingerabdruck"; exit 1; }
+            grep -qE "SHA-256 digest: ${erwartet}$" zertifikat.txt \
               || { echo "::error::Signaturschlüssel passt nicht zu android/signatur-fingerabdruck.txt"; exit 1; }
           fi
 
@@ -129,8 +141,8 @@ jobs:
         with:
           name: fitness-apk
 
-      # Das Release bleibt bestehen, nur die Datei wird ersetzt – so ist die
-      # Download-Adresse nie tot.
+      # Das Release bleibt bestehen, nur die Datei wird ersetzt – die Download-Adresse
+      # ist höchstens für die Sekunden des Hochladens nicht erreichbar.
       - name: Als Release „apk“ veröffentlichen
         run: |
           gh release view apk > /dev/null 2>&1 \

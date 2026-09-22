@@ -15,8 +15,9 @@ Eine private Trainings-App als **PWA** — eine Webseite, die sich auf dem
 Android-Startbildschirm ablegen lässt und dort wie eine App startet: Vollbild,
 eigenes Symbol, offline lauffähig.
 
-**Kein Play Store, keine APK, kein Android Studio.** Das war die Entscheidung
-ganz am Anfang, und sie hat sich gehalten: Auf dem Rechner sind nur Node und
+**Kein Play Store, kein Android Studio.** Das war die Entscheidung
+ganz am Anfang (damals auch: keine APK – seit September 2026 gibt es eine, gebaut
+von GitHub, siehe Abschnitt 9), und sie hat sich gehalten: Auf dem Rechner sind nur Node und
 Python installiert — kein Java, kein Android SDK. Eine native App hätte eine
 Einmal-Installation von rund 1,5 GB bedeutet.
 
@@ -339,7 +340,8 @@ so stimmt die Zeit beim Wiederöffnen trotzdem.
 | Upload scheint zu fehlen | `Commit changes` nicht gedrückt — der Knopf sitzt weit unter der Dateiliste | Ans Seitenende scrollen |
 | Alles landet eine Ebene zu tief | Ordner `veroeffentlichen` statt seines Inhalts gezogen | Inhalt markieren (Strg+A) und ziehen |
 | „Offline-Betrieb nicht aktiv" bleibt stehen | Seite nicht über https aufgerufen | Adresse prüfen |
-| Übungen verschwunden | Android hat den Speicher freigeräumt | Sicherung importieren, danach `⋯` → **Dauerhaft speichern anfordern** |
+| Übungen verschwunden (Web-Version) | Android oder „Browserdaten löschen“ hat Chromes Speicher geleert | Sicherung importieren, danach `⋯` → **Dauerhaft speichern anfordern**; besser auf die APK umsteigen |
+| APK startet nicht | – | **Nicht deinstallieren** (löscht die Daten). Wegwischen und neu starten, sonst die APK von der Release-Adresse darüber installieren |
 | Am Handy taucht eine neue Funktion nicht auf | Code noch nicht hochgeladen | `node werkzeuge/online-pruefen.js` |
 
 **Vor größeren Änderungen exportieren.** Die JSON-Datei ist die einzige

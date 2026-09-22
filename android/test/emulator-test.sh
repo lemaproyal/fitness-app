@@ -8,7 +8,8 @@
 #
 # Die App lädt die Live-Seite von GitHub Pages. Schritte, die neuen Web-Code
 # brauchen, prüfen erst, ob er schon live ist, und sagen sonst ausdrücklich
-# „übersprungen“ – auf main laufen sie dann nach dem Hochladen mit.
+# „übersprungen“. Mit WEBCODE_PFLICHT=true (auf main, nachdem
+# pages-abwarten.sh den neuen Stand bestätigt hat) ist Überspringen ein Fehler.
 
 set -euo pipefail
 
@@ -25,6 +26,8 @@ YOUTUBE_HERKUNFT="https://www.youtube-nocookie.com"
 mkdir -p "$AUS"
 PROTOKOLL="$AUS/protokoll.txt"
 : > "$PROTOKOLL"
+
+WEBCODE_PFLICHT="${WEBCODE_PFLICHT:-false}"
 
 schritt() { echo; echo "== $*" | tee -a "$PROTOKOLL"; }
 notiz()   { echo "$*" | tee -a "$PROTOKOLL"; }
@@ -74,9 +77,10 @@ app_starten() {
 
 # Tippt auf die Schaltfläche mit dieser Kennung (z. B. android:id/button1 = OK).
 tippen_auf() {
-  adb shell uiautomator dump /sdcard/ansicht.xml > /dev/null
+  # Nicht nach /sdcard – dort tauchte die Datei in der Dateiauswahl auf.
+  adb shell uiautomator dump /data/local/tmp/ansicht.xml > /dev/null
   local grenzen
-  grenzen=$(adb shell cat /sdcard/ansicht.xml | tr -d '\r' \
+  grenzen=$(adb shell cat /data/local/tmp/ansicht.xml | tr -d '\r' \
     | grep -o "resource-id=\"$1\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" \
     | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | head -1 || true)
   [ -n "$grenzen" ] || fehler "Schaltfläche $1 nicht gefunden"
@@ -86,6 +90,11 @@ tippen_auf() {
 
 neuer_webcode_live() {
   [ "$(js "try { return (await (await fetch('src/datei.js', { cache: 'no-store' })).text()).includes('dateiAusgeben') } catch { return false }")" = "true" ]
+}
+
+uebersprungen() {
+  [ "$WEBCODE_PFLICHT" = "true" ] && fehler "$1 – neuer Web-Code ist nicht live, obwohl er es sein müsste"
+  notiz "übersprungen: $1 – Live-Seite noch ohne neuen Web-Code"
 }
 
 schritt "0. Warten, bis der Emulator Internet hat"
@@ -112,7 +121,7 @@ if neuer_webcode_live; then
   erwarte "Installationshinweis in der APK ausgeblendet" \
     "$(js "return document.getElementById('installHinweis').hidden")" "true"
 else
-  notiz "übersprungen: Installationshinweis – Live-Seite noch ohne neuen Web-Code"
+  uebersprungen "Installationshinweis"
 fi
 
 schritt "2. Datei-Brücke auf der eigenen Adresse vorhanden"
@@ -134,7 +143,7 @@ adb shell ls -l /sdcard/Download/ | tee -a "$PROTOKOLL"
 erwarte "Dateiinhalt" "$(adb shell cat /sdcard/Download/fitness-emulator-test.json | tr -d '\r' || true)" '{"test":true}'
 
 schritt "5. Bestätigungsdialog (confirm) mit OK"
-js "setTimeout(() => { window.dialogAntwort = confirm('Emulator-Test: Dialog sichtbar?'); }, 0); return true" > /dev/null
+js "setTimeout(() => { window.dialogAntwort = confirm('Emulator-Test: Dialog sichtbar?'); }, 0); return true" > /dev/null   || fehler "Dialog ließ sich nicht öffnen"
 sleep 2
 bild "2-dialog"
 tippen_auf "android:id/button1"
@@ -145,16 +154,16 @@ schritt "6. YouTube-Video eingebettet, ohne Zugriff auf die Brücke"
 js "const f = document.createElement('iframe');
     f.src = '$YOUTUBE_HERKUNFT/embed/$YOUTUBE_ID';
     f.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:56vw;z-index:9999;border:0';
-    document.body.append(f); return true" > /dev/null
+    document.body.append(f); return true" > /dev/null || fehler "YouTube-iframe ließ sich nicht einfügen"
 sleep 10
 bild "3-youtube"
 erwarte "Brücke im YouTube-iframe nicht sichtbar" \
   "$(js 'return typeof window.FitnessAndroid' "$YOUTUBE_HERKUNFT")" '"undefined"'
 
 schritt "7. Dateiauswahl für den Import"
-js "location.href = new URL('verwaltung.html', location.href).href; return true" > /dev/null
+js "location.href = new URL('verwaltung.html', location.href).href; return true" > /dev/null   || fehler "Wechsel zur Verwaltung gescheitert"
 seite_abwarten "verwaltung.html"
-js "document.getElementById('fImport').click(); return true" > /dev/null
+js "document.getElementById('fImport').click(); return true" > /dev/null   || fehler "Import-Feld nicht gefunden"
 sleep 4
 bild "4-dateiauswahl"
 oben=$(adb shell dumpsys activity activities | grep -m1 "topResumedActivity\|mResumedActivity" | tr -d '\r' || true)
@@ -165,23 +174,23 @@ sleep 2
 
 schritt "8. Export-Knopf der Web-App"
 if neuer_webcode_live; then
-  js "document.getElementById('btnExport').click(); return true" > /dev/null
+  js "document.getElementById('btnExport').click(); return true" > /dev/null     || fehler "Export-Knopf nicht gefunden"
   sleep 3
   bild "5-export-knopf"
-  meldung=$(js "return document.getElementById('meldung').textContent")
+  meldung=$(js "return document.getElementById('meldung').textContent" || true)
   notiz "Meldung: $meldung"
   echo "$meldung" | grep -q "in „Downloads“ gespeichert" || fehler "Export-Knopf meldet keinen Erfolg"
   adb shell ls /sdcard/Download/ | tr -d '\r' | grep -q "^fitness-sicherung-" || fehler "Sicherung fehlt im Download-Ordner"
   notiz "OK: Sicherung liegt im Download-Ordner"
 else
-  notiz "übersprungen: Export-Knopf – Live-Seite noch ohne neuen Web-Code (Brücke selbst: Schritt 4)"
+  uebersprungen "Export-Knopf (die Brücke selbst prüft Schritt 4)"
 fi
 
 schritt "9. Wechsel in den Hintergrund erreicht die Seite sofort"
 js "localStorage.setItem('sichtbarkeit', '');
     document.addEventListener('visibilitychange', () =>
       localStorage.setItem('sichtbarkeit', localStorage.getItem('sichtbarkeit') + document.visibilityState + ' '));
-    return true" > /dev/null
+    return true" > /dev/null || fehler "Beobachter für den Hintergrundwechsel ließ sich nicht setzen"
 adb shell input keyevent KEYCODE_HOME
 sleep 1
 symbol_antippen > /dev/null

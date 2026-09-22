@@ -1,6 +1,6 @@
 # Die App aufs Handy bringen
 
-Ohne Play Store, ohne APK, ohne Android Studio. Der Weg führt über GitHub Pages:
+Ohne Play Store, ohne Android Studio. Der Weg führt über GitHub Pages:
 Dateien hochladen, Adresse am Handy öffnen, zum Startbildschirm hinzufügen.
 
 Besser ist inzwischen die Android-App (APK) aus `APK.md`: Sie lädt dieselbe Seite,

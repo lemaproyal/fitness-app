@@ -12,14 +12,19 @@ Android SDK installiert sind.
 ## Akzeptanzkriterien (prüfbar)
 - [ ] GitHub Actions baut bei jedem Push eine signierte APK (fester Schlüssel, damit spätere
       APK-Updates ohne Deinstallieren – also ohne Datenverlust – möglich sind)
-      **Teilweise:** Debug-APK wird gebaut und getestet. Die signierte APK ist erst belegbar,
-      wenn der Nutzer die Secrets hinterlegt hat.
+      **Teilweise:** Test-APK wird gebaut und geprüft; der Weg zur signierten APK läuft mit
+      Wegwerf-Schlüssel grün (`apksigner verify`, Run 35746106408). Mit dem echten Schlüssel erst
+      belegbar, wenn der Nutzer die Secrets hinterlegt hat.
 - [x] Die APK startet und zeigt die Fitness-App (Screenshot aus dem Android-Emulator)
 - [x] Daten liegen im App-eigenen Speicher: Chrome-Daten löschen (`pm clear com.android.chrome`)
       lässt die Datenbank der App unangetastet (Emulator-Beweis)
-- [x] Import funktioniert (Dateiauswahl öffnet sich in der APK)
-- [x] Export funktioniert in der APK: Sicherung/CSV landet im Download-Ordner des Handys
-- [x] Bestätigungsdialoge (`confirm`) und YouTube-Videos funktionieren in der APK
+- [x] Import: Dateiauswahl öffnet sich in der APK (das Einlesen selbst ist unveränderter Web-Code)
+- [ ] Export funktioniert in der APK: Sicherung/CSV landet im Download-Ordner des Handys
+      **Teilweise:** Brücke im Emulator belegt (Datei + Antwort), Web-Seite lokal mit nachgebildeter
+      Brücke belegt. Der echte Export-Knopf in der APK ist erst nach dem Merge belegbar – der Lauf auf
+      main wartet auf GitHub Pages und scheitert, falls er ihn nicht prüfen kann.
+- [x] Bestätigungsdialoge (`confirm`) funktionieren; YouTube-Player lädt in der APK (Abspielen und
+      Vollbild nicht automatisch geprüft)
 - [x] Die Web-Version im Browser verhält sich unverändert (Export per Download wie bisher)
 - [x] Anleitung für den Nutzer: Schlüssel bei GitHub hinterlegen, APK installieren, Sicherung importieren
 
@@ -110,4 +115,28 @@ Bewusst nicht umgesetzt:
 - Actions auf Commit-SHA pinnen – Geschmacksfrage, Schreibrechte sind bereits auf den Release-Job begrenzt.
 - `setup-gradle` bleibt auf v4 (nur Hinweis zu Node 20, keine Funktionsstörung).
 - Erlaubte Herkunft `https://lemaproyal.github.io` gilt für alle Pages-Repos des Nutzers – alle gehören ihm.
+
+### Runde 2 – Score 3/5 (Android-App 4, Workflow/Tests 4, Web/Doku 3)
+Behoben:
+- Anleitung hätte zu Datenverlust geführt: `aktualisieren.html` riet „Symbol löschen, neu
+  installieren – Datenbank bleibt“. Für die APK jetzt ausdrücklich „nie deinstallieren, darüber
+  installieren“ (auch `anleitung.html`, `PROJEKT.md`, `APK.md`); „Dauerhaft speichern“ als
+  „nur Web-Version“ gekennzeichnet; veraltetes „ohne APK“ korrigiert; `APK.md`: Secrets vor dem
+  Merge, Release statt „Lauf grün“ prüfen.
+- Meldungen: WebView ohne Brücke („in dieser Ansicht nicht möglich …“), Zeitüberschreitung
+  („… bitte im Ordner Downloads nachsehen“).
+- App: Fertigstellen der Datei geprüft (sonst kein „ok“), Aufräumen robust, verzögertes Neuladen
+  wird beim Schließen entfernt, WebView vor `destroy()` gelöst, ein Schreib-Thread für die ganze App,
+  weitere `configChanges`, nur https für die eigene Adresse, Systemleisten per Wisch, Dialog nicht
+  bei schließender App, `resValues` entfernt (Standard).
+- Workflow: signierte APK nur von main als Artefakt; Fingerabdruck-Datei wird auf Gültigkeit
+  geprüft; Secret ohne Zeilenumbrüche dekodiert; keine Läufe für Tags; auf main wartet der Lauf,
+  bis GitHub Pages den Commit ausliefert (`android/test/pages-abwarten.sh`), und „übersprungen“
+  ist dort ein Fehler (`WEBCODE_PFLICHT`).
+- Test: jede Aktion mit Fehlerzeile im Protokoll; uiautomator-Abbild nicht mehr in `/sdcard`.
+- Protokoll: Export- und YouTube-Kriterium ehrlich eingeschränkt.
+Bewusst nicht umgesetzt:
+- YouTube abspielen / Vollbild automatisch testen – im Emulator ohne Nutzertipp unzuverlässig;
+  Kriterium entsprechend eingeschränkt.
+- Kurzes Aufblitzen der WebView-Fehlerseite beim zweiten Fehlschlag – rein kosmetisch.
 

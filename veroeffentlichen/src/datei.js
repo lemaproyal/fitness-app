@@ -33,10 +33,11 @@ async function dateiSpeichern(dateiname, inhalt, typ) {
     const name = await ueberAndroidSpeichern(dateiname, inhalt, typ);
     return `in „Downloads“ gespeichert (${name})`;
   }
-  // Eine WebView ohne Brücke (ältere App-Fassung) würde den Download stumm
-  // verwerfen – lieber ehrlich scheitern als „heruntergeladen“ melden.
+  // Eine WebView ohne Brücke (ältere App-Fassung oder der eingebaute Browser
+  // anderer Apps) würde den Download stumm verwerfen – lieber ehrlich scheitern
+  // als „heruntergeladen“ melden.
   if (/; wv\)/.test(navigator.userAgent)) {
-    throw new Error("diese App-Fassung kann keine Dateien speichern – bitte die APK aktualisieren");
+    throw new Error("in dieser Ansicht nicht möglich – in Chrome oder der aktuellen Fitness-App öffnen");
   }
 
   const blob = new Blob([inhalt], { type: typ });
@@ -61,7 +62,7 @@ function ueberAndroidSpeichern(dateiname, inhalt, typ) {
   return new Promise((erfuellen, ablehnen) => {
     const zeitgeber = setTimeout(() => {
       offeneAuftraege.delete(id);
-      ablehnen(new Error("die App hat nicht geantwortet"));
+      ablehnen(new Error("die App hat nicht geantwortet – bitte im Ordner Downloads nachsehen"));
     }, ANTWORT_WARTEZEIT_MS);
     offeneAuftraege.set(id, { erfuellen, ablehnen, zeitgeber });
     bruecke.postMessage(JSON.stringify({ aktion: "dateiSpeichern", id, dateiname, inhalt, typ }));

@@ -5,9 +5,12 @@ Die APK zeigt dieselbe App wie die Web-Version, speichert die Daten aber im
 nicht mehr. Weg sind die Daten nur, wenn die App deinstalliert wird oder in den
 Android-Einstellungen bei der App „Speicher leeren“ getippt wird.
 
-Den Programmcode holt die APK von GitHub Pages. Änderungen kommen also wie
-bisher durch Hochladen aufs Handy. Eine neue APK braucht es nur, wenn sich im
-Ordner `android/` etwas ändert.
+Den Programmcode holt die APK von GitHub Pages. Änderungen lädst du also wie
+bisher zu GitHub hoch, die App holt sie sich selbst („Jetzt aktualisieren“).
+Eine neue APK braucht es nur, wenn sich im Ordner `android/` etwas ändert.
+
+**Die App nie deinstallieren** – das löscht ihre Daten. Eine neue APK wird
+einfach darüber installiert.
 
 ## Einmalig: Signaturschlüssel bei GitHub hinterlegen
 
@@ -32,13 +35,14 @@ installieren.
 
 ## Bevor die APK aufs Handy kommt
 
-1. Der Pull Request mit der APK ist gemergt. Dadurch sind auch die angepassten
+1. Die Secrets sind hinterlegt (siehe oben) – am besten **vor** dem Merge.
+2. Der Pull Request mit der APK ist gemergt. Dadurch sind auch die angepassten
    Web-Dateien (`src/datei.js`, `src/pwa.js`, `sw.js`) auf GitHub Pages. Ohne
    sie kann die APK nicht exportieren.
-2. Die Secrets sind hinterlegt (siehe oben).
-3. Unter **Actions → Android-APK** ist der Lauf auf `main` grün. Erst dann gibt
-   es das Release mit der Datei `fitness.apk`. Wurden die Secrets erst nach dem
-   Merge hinterlegt: **Run workflow** drücken.
+3. Unter **Releases** (rechte Spalte auf der Repository-Seite) steht „Fitness-App
+   für Android“ mit heutigem Datum. Ein grüner Lauf allein reicht nicht – ohne
+   Secrets ist er auch grün, veröffentlicht aber nichts. Fehlt das Release:
+   **Actions → Android-APK → Run workflow** (Branch `main`).
 
 ## Am Handy installieren
 

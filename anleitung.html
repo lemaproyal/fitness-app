@@ -235,7 +235,8 @@
     <h1>Fitness aufs Handy</h1>
     <p class="anriss">
       Von deinem Rechner auf den Startbildschirm deines Android-Handys — ohne Play Store,
-      ohne APK, ohne Android Studio. Einmal einrichten, danach genügt Hochladen.
+      ohne Android Studio. Einmal einrichten, danach genügt Hochladen. Die Android-App
+      mit eigenem Datenspeicher baut darauf auf, siehe <span class="pfad">APK.md</span>.
     </p>
     <div class="kennzahlen">
       <div class="kennzahl"><b>16</b><span>Dateien</span></div>
@@ -701,11 +702,12 @@ sw.js                 src/start.js
       <li class="schritt">
         <div class="nummer">29</div>
         <div class="schritt-inhalt">
-          <h3>Dauerhaft speichern erlauben</h3>
+          <h3>Dauerhaft speichern erlauben (nur Web-Version)</h3>
           <p><span class="knopf">⋯</span> →
              <span class="knopf">Dauerhaft speichern anfordern</span> antippen.</p>
           <p class="dazu">Ohne diese Erlaubnis darf Android die Datenbank löschen, wenn der
-             Speicher knapp wird. Vom Startbildschirm aus wird sie fast immer erteilt.</p>
+             Speicher knapp wird. Vom Startbildschirm aus wird sie fast immer erteilt. In der
+             Android-App (APK) ist das nicht nötig.</p>
         </div>
       </li>
 
@@ -824,11 +826,12 @@ sw.js                 src/start.js
           <tr>
             <td>Änderungen kommen nicht an</td>
             <td><code>VERSION</code> in <span class="pfad">sw.js</span> nicht hochgezählt</td>
-            <td>Schritt 30 bis 32 nachholen. Im Notfall: App-Symbol löschen, in Chrome die Adresse
-                öffnen, neu installieren.</td>
+            <td>Schritt 30 bis 32 nachholen. Im Notfall (nur Web-Version): App-Symbol löschen, in
+                Chrome die Adresse öffnen, neu installieren. Die Android-App nie deinstallieren –
+                das löscht ihre Daten.</td>
           </tr>
           <tr>
-            <td>Übungen sind weg</td>
+            <td>Übungen sind weg (Web-Version)</td>
             <td>Android hat den Speicher freigeräumt</td>
             <td>Sicherung importieren (Schritt 28) und danach unbedingt
                 <span class="knopf">Dauerhaft speichern anfordern</span> antippen.</td>
