@@ -32,7 +32,13 @@ WEBCODE_PFLICHT="${WEBCODE_PFLICHT:-false}"
 schritt() { echo; echo "== $*" | tee -a "$PROTOKOLL"; }
 notiz()   { echo "$*" | tee -a "$PROTOKOLL"; }
 bild()    { adb exec-out screencap -p > "$AUS/$1.png"; notiz "Screenshot: $1.png"; }
-fehler()  { notiz "FEHLER: $*"; bild "fehler"; exit 1; }
+fehler()  {
+  notiz "FEHLER: $*"; bild "fehler"
+  # Das Android-Protokoll zeigt, ob und warum die App abgestürzt ist.
+  adb logcat -d -b crash > "$AUS/logcat-abstuerze.txt" 2>&1 || true
+  adb logcat -d -t 1500 > "$AUS/logcat.txt" 2>&1 || true
+  exit 1
+}
 js()      { $CDP "$@"; }
 erwarte() { [ "$2" = "$3" ] || fehler "$1 – erwartet $3, erhalten ${2:-(nichts)}"; notiz "OK: $1"; }
 
