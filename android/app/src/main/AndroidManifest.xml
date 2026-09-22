@@ -12,13 +12,14 @@
              aufnehmen. Eine Zusatzchance bei Handywechsel – die eigene Sicherung
              (Exportieren) ersetzt das nicht. -->
 
-        <!-- configChanges: Drehen und Tastatur sollen die Seite nicht neu laden. -->
+        <!-- configChanges: Drehen, Tastatur, Dunkelmodus, Schriftgröße oder Sprache sollen
+             die Seite nicht neu laden – ein offener Dialog ginge sonst verloren. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden">
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode|fontScale|locale|layoutDirection|density">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

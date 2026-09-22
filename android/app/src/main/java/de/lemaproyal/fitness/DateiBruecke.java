@@ -37,17 +37,18 @@ import java.util.concurrent.Executors;
 final class DateiBruecke implements WebViewCompat.WebMessageListener {
 
     private static final String NAME_IM_BROWSER = "FitnessAndroid";
+    // Eine Sicherung kann mehrere Megabyte haben – Schreiben blockiert sonst die Oberfläche.
+    // Statisch: Ein Thread für die ganze App, auch wenn Android die Activity neu erzeugt.
+    private static final ExecutorService SCHREIBER = Executors.newSingleThreadExecutor();
 
     private final Context context;
-    // Eine Sicherung kann mehrere Megabyte haben – Schreiben blockiert sonst die Oberfläche.
-    private final ExecutorService schreiber = Executors.newSingleThreadExecutor();
 
     private DateiBruecke(Context context) {
         this.context = context.getApplicationContext();
     }
 
     static void anmelden(WebView webView, Context context) {
-        // Seit Android-WebView 2021 vorhanden, das über den Play Store aktualisiert wird.
+        // Seit Android-WebView 2020 vorhanden, das über den Play Store aktualisiert wird.
         // Fehlt die Funktion trotzdem, erkennt src/datei.js die WebView ohne Brücke und
         // meldet, dass nicht gespeichert werden kann.
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
@@ -68,7 +69,7 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
         }
         if (!"dateiSpeichern".equals(auftrag.optString("aktion"))) return;
 
-        schreiber.execute(() -> {
+        SCHREIBER.execute(() -> {
             JSONObject ergebnis = ausfuehren(auftrag);
             // Antworten darf nur der UI-Thread.
             ansicht.post(() -> antwort.postMessage(ergebnis.toString()));
@@ -107,19 +108,32 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
         Uri ziel = speicher.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, werte);
         if (ziel == null) throw new IOException("Download-Ordner nicht erreichbar");
 
-        try (OutputStream aus = speicher.openOutputStream(ziel)) {
-            if (aus == null) throw new IOException("Datei lässt sich nicht öffnen");
-            aus.write(inhalt.getBytes(StandardCharsets.UTF_8));
+        try {
+            try (OutputStream aus = speicher.openOutputStream(ziel)) {
+                if (aus == null) throw new IOException("Datei lässt sich nicht öffnen");
+                aus.write(inhalt.getBytes(StandardCharsets.UTF_8));
+            }
+            werte.clear();
+            werte.put(MediaStore.Downloads.IS_PENDING, 0);
+            // Bleibt die Datei „in Arbeit“, ist sie unsichtbar und Android löscht sie
+            // nach einigen Tagen – das darf nicht als Erfolg gemeldet werden.
+            if (speicher.update(ziel, werte, null, null) != 1) {
+                throw new IOException("Datei ließ sich nicht fertigstellen");
+            }
         } catch (IOException | RuntimeException e) {
-            // Sonst bliebe ein halb angelegter, unsichtbarer Eintrag im Download-Ordner liegen.
-            speicher.delete(ziel, null, null);
+            halbeDateiEntfernen(speicher, ziel);
             throw e;
         }
-
-        werte.clear();
-        werte.put(MediaStore.Downloads.IS_PENDING, 0);
-        speicher.update(ziel, werte, null, null);
         return tatsaechlicherName(speicher, ziel, dateiname);
+    }
+
+    /** Sonst bliebe ein halb angelegter, unsichtbarer Eintrag im Download-Ordner liegen. */
+    private static void halbeDateiEntfernen(ContentResolver speicher, Uri ziel) {
+        try {
+            speicher.delete(ziel, null, null);
+        } catch (RuntimeException ignoriert) {
+            // Der ursprüngliche Fehler ist wichtiger; Android räumt „in Arbeit“-Einträge selbst auf.
+        }
     }
 
     private static String tatsaechlicherName(ContentResolver speicher, Uri ziel, String vorgabe) {

@@ -105,8 +105,10 @@ jobs:
               || { echo "::error::Signaturschlüssel passt nicht zu android/signatur-fingerabdruck.txt"; exit 1; }
           fi
 
+      # Nur von main: Eine echt signierte APK aus einem Branch hätte womöglich eine höhere
+      # Versionsnummer als main – danach ginge ein Update nur noch per Deinstallation.
       - name: Signierte APK aufheben
-        if: steps.signiert.outputs.echt == 'ja'
+        if: steps.signiert.outputs.echt == 'ja' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v5
         with:
           name: fitness-apk

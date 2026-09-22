@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.webkit.JsResult;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -50,6 +51,7 @@ public class MainActivity extends Activity {
     private View vollbildAnsicht;
     private WebChromeClient.CustomViewCallback vollbildRueckruf;
     private boolean ladenWiederholt;
+    private final Runnable neuLaden = () -> webView.reload();
 
     @Override
     protected void onCreate(Bundle zustand) {
@@ -91,6 +93,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        webView.removeCallbacks(neuLaden);
+        ((ViewGroup) webView.getParent()).removeView(webView); // vor destroy() lösen, so empfiehlt es Google
         webView.destroy();
         super.onDestroy();
     }
@@ -130,8 +134,14 @@ public class MainActivity extends Activity {
     private void systemleistenZeigen(boolean zeigen) {
         // Unter Android 11 fehlt die Schnittstelle; dort bleiben die Leisten sichtbar.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
-        if (zeigen) getWindow().getInsetsController().show(WindowInsets.Type.systemBars());
-        else getWindow().getInsetsController().hide(WindowInsets.Type.systemBars());
+        WindowInsetsController leisten = getWindow().getInsetsController();
+        if (zeigen) {
+            leisten.show(WindowInsets.Type.systemBars());
+        } else {
+            // Wischen blendet sie kurz ein, danach verschwinden sie wieder.
+            leisten.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            leisten.hide(WindowInsets.Type.systemBars());
+        }
     }
 
     private void vollbildBeenden() {
@@ -152,10 +162,10 @@ public class MainActivity extends Activity {
             // Was in eingebetteten Seiten (YouTube-Player) passiert, bleibt deren Sache.
             if (!anfrage.isForMainFrame()) return false;
             Uri ziel = anfrage.getUrl();
-            if (APP_HOST.equals(ziel.getHost())) return false;
+            String schema = ziel.getScheme();
+            if (APP_HOST.equals(ziel.getHost()) && "https".equals(schema)) return false;
             // Fremde Webseiten (z. B. „Auf YouTube ansehen“) gehören in den Browser,
             // nicht in die App. Andere Schemata werden gar nicht erst weitergereicht.
-            String schema = ziel.getScheme();
             if (!"https".equals(schema) && !"http".equals(schema)) return true;
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, ziel));
@@ -173,7 +183,7 @@ public class MainActivity extends Activity {
             if (!ladenWiederholt) {
                 ladenWiederholt = true;
                 ansicht.setVisibility(View.INVISIBLE); // verbirgt die Fehlerseite der WebView
-                ansicht.postDelayed(ansicht::reload, NEUER_VERSUCH_NACH_MS);
+                ansicht.postDelayed(neuLaden, NEUER_VERSUCH_NACH_MS);
                 return;
             }
             // Hauptseite nicht ladbar – meist beim allerersten Start ohne Verbindung,
@@ -228,6 +238,11 @@ public class MainActivity extends Activity {
         }
 
         private void dialog(String text, JsResult ergebnis, boolean mitAbbrechen) {
+            // Schließt die App gerade, ließe sich kein Fenster mehr öffnen.
+            if (isFinishing()) {
+                ergebnis.cancel();
+                return;
+            }
             AlertDialog.Builder aufbau = new AlertDialog.Builder(MainActivity.this)
                     .setTitle(R.string.app_name)
                     .setMessage(text)
