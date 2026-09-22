@@ -10,8 +10,10 @@ GitHub Pages. Gebaut wird die APK von GitHub Actions, weil am Rechner weder Java
 Android SDK installiert sind.
 
 ## Akzeptanzkriterien (prüfbar)
-- [x] GitHub Actions baut bei jedem Push eine signierte APK (fester Schlüssel, damit spätere
+- [ ] GitHub Actions baut bei jedem Push eine signierte APK (fester Schlüssel, damit spätere
       APK-Updates ohne Deinstallieren – also ohne Datenverlust – möglich sind)
+      **Teilweise:** Debug-APK wird gebaut und getestet. Die signierte APK ist erst belegbar,
+      wenn der Nutzer die Secrets hinterlegt hat.
 - [x] Die APK startet und zeigt die Fitness-App (Screenshot aus dem Android-Emulator)
 - [x] Daten liegen im App-eigenen Speicher: Chrome-Daten löschen (`pm clear com.android.chrome`)
       lässt die Datenbank der App unangetastet (Emulator-Beweis)
