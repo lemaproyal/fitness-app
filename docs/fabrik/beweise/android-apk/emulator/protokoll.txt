@@ -7,8 +7,8 @@ Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.L
 Status: ok
 LaunchState: COLD
 Activity: de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity
-TotalTime: 2970
-WaitTime: 3000
+TotalTime: 3381
+WaitTime: 3394
 Complete
 Adresse: "https://lemaproyal.github.io/fitness-app/"
 Titel:   "Fitness"
@@ -21,7 +21,7 @@ OK: Übung gespeichert
 == 4. Export über die Brücke: Datei im Download-Ordner, Antwort an die Seite
 OK: Antwort der App
 total 8
--rwxrwx--- 1 u0_a178 media_rw 13 2026-09-22 15:56 fitness-emulator-test.json
+-rwxrwx--- 1 u0_a184 media_rw 13 2026-09-22 16:44 fitness-emulator-test.json
 OK: Dateiinhalt
 == 5. Bestätigungsdialog (confirm) mit OK
 Screenshot: 2-dialog.png
@@ -31,7 +31,7 @@ Screenshot: 3-youtube.png
 OK: Brücke im YouTube-iframe nicht sichtbar
 == 7. Dateiauswahl für den Import
 Screenshot: 4-dateiauswahl.png
-Vorderste Ansicht:     topResumedActivity=ActivityRecord{93097a3 u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity t8}
+Vorderste Ansicht:     topResumedActivity=ActivityRecord{b28433a u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity t8}
 == 8. Export-Knopf der Web-App
 übersprungen: Export-Knopf (die Brücke selbst prüft Schritt 4) – Live-Seite noch ohne neuen Web-Code
 == 9. Wechsel in den Hintergrund erreicht die Seite sofort
@@ -57,10 +57,29 @@ Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.L
 Status: ok
 LaunchState: COLD
 Activity: de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity
-TotalTime: 823
-WaitTime: 854
+TotalTime: 1428
+WaitTime: 1439
 Complete
 OK: Markierung nach dem Löschen der Chrome-Daten noch da
 Screenshot: 6-nach-chrome-loeschen.png
 (Die Startseite zählt die Markierung nicht mit – sie hat keinen Trainingstag. Beweis ist die Zeile darüber.)
+== 11. Absturz der Darstellung: App baut sich neu auf, statt sich zu schließen
+OK: App-Prozess läuft weiter
+OK: Daten nach dem Neuaufbau noch da
+Screenshot: 7-nach-absturz.png
+== 12. Allererster Start ohne Internet: Offline-Seite, dann „Erneut versuchen“
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity
+TotalTime: 828
+WaitTime: 858
+Complete
+OK: Offline-Seite: "url": "file:///android_asset/offline.html?grund=net%3A%3AERR_NAME_NOT_RESOLVED"
+Screenshot: 8-offline.png
+online nach 1 Versuch(en)
+Offline-Seite (1. Mal): "url": "file:///android_asset/offline.html?grund=net%3A%3AERR_NAME_NOT_RESOLVED" – tippe „Erneut versuchen“
+Offline-Seite (2. Mal): "url": "file:///android_asset/offline.html?grund=net%3A%3AERR_NAME_NOT_RESOLVED" – tippe „Erneut versuchen“
+OK: nach 2 Tipp(s) auf „Erneut versuchen“ lädt die App
+Screenshot: 9-nach-erneut-versuchen.png
 == ALLE PRÜFUNGEN BESTANDEN

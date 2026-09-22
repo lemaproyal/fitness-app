@@ -56,24 +56,30 @@ Android SDK installiert sind.
 - [vorher-1-keine-apk.txt](beweise/android-apk/vorher-1-keine-apk.txt) – kein Android-Projekt,
   kein Build, Export nur als Browser-Download
 
-- Emulator-Lauf auf GitHub Actions (Android 14, Test-APK `de.lemaproyal.fitness.test`), Run 35750291316 auf Commit e906df0 (derselbe Stand zusätzlich grün in Run 35750302925) –
+- Emulator-Lauf auf GitHub Actions (Android 14, Test-APK `de.lemaproyal.fitness.test`), Run 35755833929 auf
+  Commit 5a781ce, derselbe Stand zusätzlich grün in Run 35755847743 (beide ohne Neuversuch) –
   [protokoll.txt](beweise/android-apk/emulator/protokoll.txt), jede Prüfung als `OK:`-Zeile:
-  - [nachher-1 Start](beweise/android-apk/emulator/1-start.png) – APK zeigt die App von GitHub Pages
+  - [1 Start](beweise/android-apk/emulator/1-start.png) – APK zeigt die App von GitHub Pages
   - Brücke: Antwort `{"id":7,"ok":true,"name":"fitness-emulator-test.json"}`, Datei in `/sdcard/Download` mit korrektem Inhalt
-  - [nachher-2 Dialog](beweise/android-apk/emulator/2-dialog.png) – `confirm()` mit App-Namen als Titel, OK liefert `true`
-  - [nachher-3 YouTube](beweise/android-apk/emulator/3-youtube.png) – eingebetteter Player lädt; im YouTube-iframe ist `FitnessAndroid` `undefined`
-  - [nachher-4 Dateiauswahl](beweise/android-apk/emulator/4-dateiauswahl.png) – Import öffnet die Android-Dateiauswahl
+  - [2 Dialog](beweise/android-apk/emulator/2-dialog.png) – `confirm()` mit App-Namen als Titel, OK liefert `true`
+  - [3 YouTube](beweise/android-apk/emulator/3-youtube.png) – Player lädt; im YouTube-iframe ist `FitnessAndroid` `undefined`
+  - [4 Dateiauswahl](beweise/android-apk/emulator/4-dateiauswahl.png) – Import öffnet die Android-Dateiauswahl
   - Hintergrundwechsel: Seite erhält `hidden`, dann `visible`, bleibt auf derselben Seite
-  - [nachher-6 Chrome gelöscht](beweise/android-apk/emulator/6-nach-chrome-loeschen.png) – nach `pm clear com.android.chrome`
+  - [6 Chrome gelöscht](beweise/android-apk/emulator/6-nach-chrome-loeschen.png) – nach `pm clear com.android.chrome`
     und Neustart ist die gespeicherte Übung noch da (Beweis ist die `OK:`-Zeile; die Startseite zählt Übungen ohne Trainingstag nicht)
+  - [7 nach Absturz](beweise/android-apk/emulator/7-nach-absturz.png) – Darstellung per `Page.crash` abgestürzt: Prozess läuft
+    weiter, App baut sich neu auf, Daten da
+  - [8 Offline](beweise/android-apk/emulator/8-offline.png) → [9 nach „Erneut versuchen“](beweise/android-apk/emulator/9-nach-erneut-versuchen.png)
+    – erster Start im Flugmodus: Offline-Seite mit Grund; nach Flugmodus aus lädt die App nach 2 Tipps
   - **Noch nicht im Emulator belegbar, weil die APK die Live-Seite (main) lädt:** Export-Knopf der Web-App
-    und ausgeblendeter Installationshinweis. Der Test prüft beides automatisch, sobald der neue Web-Code live ist
-    (vorher meldet er „übersprungen“) – nach dem Merge läuft der Workflow auf main und belegt es.
-- Stabilität: Mehrere Läufe scheiterten, weil der allererste Seitenaufruf im frisch gestarteten
-  Emulator fehlschlug – Grund laut Offline-Seite `ERR_NAME_NOT_RESOLVED` (DNS des Emulators noch nicht
-  bereit). Gegenmittel: App versucht es einmal still erneut; Emulator mit festen DNS-Servern; der Test
-  tippt auf der Offline-Seite wie ein Nutzer „Erneut versuchen“ (höchstens dreimal, jeder Versuch mit
-  Grund im Protokoll). Seitdem grün: 35748976476, 35750291316, 35750302925.
+    und ausgeblendeter Installationshinweis (Screenshots zeigen ihn noch). Der Test prüft beides automatisch,
+    sobald der neue Web-Code live ist – auf main ist Überspringen ein Fehler.
+- Stabilität: Umgebungsfehler des Emulators, alle mit Beleg: `ERR_NAME_NOT_RESOLVED` direkt nach dem Start
+  (→ feste DNS-Server, App-Neuversuch, Test tippt „Erneut versuchen“); Android beendet die App, wenn sich die
+  Google-Play-Dienste aktualisieren (logcat: „depends on provider com.google.android.gms…FontsProvider in dying
+  proc“, Run 35754763882 – betrifft jede WebView-App, Daten bleiben) → `emulator-lauf.sh` wiederholt den Test
+  genau dann einmal, mit Warnung und erstem Versuch unter `versuch-1/`. Außerdem ein Testfehler: die
+  unsichtbare Fehlerseite der WebView galt als „geladen“ → Prüfung verlangt jetzt das Programm-Skript der App.
 - [nachher-web-lokal.txt](beweise/android-apk/nachher-web-lokal.txt) – alle Export-Fälle der Web-Seite.
 - Web-Version lokal (localhost, Browser-Pane): Export im Browser weiter als Blob-Download
   (`fitness-sicherung-2026-09-22.json`), mit `window.FitnessAndroid` stattdessen über die Brücke
@@ -186,4 +192,8 @@ Behoben:
   Kommentare zu singleTask (Nebenwirkung) und zum Datenstand beim Absturz präzisiert.
 - Web: Hilfetext „Ohne diese Erlaubnis darf der Browser …“ in der APK mit ausgeblendet (lokal:
   Browser zeigt Knopf + Text, APK keins von beiden).
+
+Nach Runde 4 (zwischen den Läufen): `uiautomator` scheiterte an der WebView-Offline-Seite („uiautomator-Abbild
+gescheitert“) → Klick auf den Link per DevTools. Zwei rote Läufe mit derselben App-Version (App verschwand) –
+per logcat als System-Abbruch durch Neustart der Google-Play-Dienste belegt, s. Stabilität.
 
