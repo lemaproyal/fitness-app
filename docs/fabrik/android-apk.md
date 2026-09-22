@@ -56,7 +56,7 @@ Android SDK installiert sind.
 - [vorher-1-keine-apk.txt](beweise/android-apk/vorher-1-keine-apk.txt) – kein Android-Projekt,
   kein Build, Export nur als Browser-Download
 
-- Emulator-Lauf auf GitHub Actions (Android 14, Test-APK `de.lemaproyal.fitness.test`), Run 35746106408 –
+- Emulator-Lauf auf GitHub Actions (Android 14, Test-APK `de.lemaproyal.fitness.test`), Run 35750291316 auf Commit e906df0 (derselbe Stand zusätzlich grün in Run 35750302925) –
   [protokoll.txt](beweise/android-apk/emulator/protokoll.txt), jede Prüfung als `OK:`-Zeile:
   - [nachher-1 Start](beweise/android-apk/emulator/1-start.png) – APK zeigt die App von GitHub Pages
   - Brücke: Antwort `{"id":7,"ok":true,"name":"fitness-emulator-test.json"}`, Datei in `/sdcard/Download` mit korrektem Inhalt
@@ -69,9 +69,11 @@ Android SDK installiert sind.
   - **Noch nicht im Emulator belegbar, weil die APK die Live-Seite (main) lädt:** Export-Knopf der Web-App
     und ausgeblendeter Installationshinweis. Der Test prüft beides automatisch, sobald der neue Web-Code live ist
     (vorher meldet er „übersprungen“) – nach dem Merge läuft der Workflow auf main und belegt es.
-- Stabilität: Zwei Läufe scheiterten, weil der allererste Seitenaufruf im frisch gestarteten Emulator
-  fehlschlug (Offline-Seite, obwohl Android „online“ meldete). Die App versucht es seitdem einmal still
-  erneut, bevor sie die Offline-Seite zeigt; die Offline-Seite nennt den Fehlergrund.
+- Stabilität: Mehrere Läufe scheiterten, weil der allererste Seitenaufruf im frisch gestarteten
+  Emulator fehlschlug – Grund laut Offline-Seite `ERR_NAME_NOT_RESOLVED` (DNS des Emulators noch nicht
+  bereit). Gegenmittel: App versucht es einmal still erneut; Emulator mit festen DNS-Servern; der Test
+  tippt auf der Offline-Seite wie ein Nutzer „Erneut versuchen“ (höchstens dreimal, jeder Versuch mit
+  Grund im Protokoll). Seitdem grün: 35748976476, 35750291316, 35750302925.
 - [nachher-web-lokal.txt](beweise/android-apk/nachher-web-lokal.txt) – alle Export-Fälle der Web-Seite.
 - Web-Version lokal (localhost, Browser-Pane): Export im Browser weiter als Blob-Download
   (`fitness-sicherung-2026-09-22.json`), mit `window.FitnessAndroid` stattdessen über die Brücke
@@ -165,4 +167,8 @@ Bewusst hingenommen:
 - Zwei schnelle Pushes auf main mit Android-Änderungen: der ältere Lauf wartet vergeblich auf
   Pages und wird rot – kein falsches Release, nur ein roter Lauf.
 - `inAndroidApp()` bleibt in `datei.js` (Entscheidung aus Runde 1).
+
+Nach Runde 3: Die DNS-Prüfung per `ping` (Vorschlag aus Runde 3) ließ den Lauf 35749461915 scheitern –
+`ping` liefert im Emulator nicht die erwartete Ausgabe; damit war auch die vorige Negativ-Prüfung
+wirkungslos (wie der Prüfer vermutet hatte). Ersetzt durch den Nutzerweg über die Offline-Seite (s. Beweise).
 

@@ -7,8 +7,8 @@ Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.L
 Status: ok
 LaunchState: COLD
 Activity: de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity
-TotalTime: 3889
-WaitTime: 3894
+TotalTime: 2970
+WaitTime: 3000
 Complete
 Adresse: "https://lemaproyal.github.io/fitness-app/"
 Titel:   "Fitness"
@@ -21,7 +21,7 @@ OK: Übung gespeichert
 == 4. Export über die Brücke: Datei im Download-Ordner, Antwort an die Seite
 OK: Antwort der App
 total 8
--rwxrwx--- 1 u0_a184 media_rw 13 2026-09-22 15:19 fitness-emulator-test.json
+-rwxrwx--- 1 u0_a178 media_rw 13 2026-09-22 15:56 fitness-emulator-test.json
 OK: Dateiinhalt
 == 5. Bestätigungsdialog (confirm) mit OK
 Screenshot: 2-dialog.png
@@ -31,9 +31,9 @@ Screenshot: 3-youtube.png
 OK: Brücke im YouTube-iframe nicht sichtbar
 == 7. Dateiauswahl für den Import
 Screenshot: 4-dateiauswahl.png
-Vorderste Ansicht:     topResumedActivity=ActivityRecord{af3f7aa u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity t8}
+Vorderste Ansicht:     topResumedActivity=ActivityRecord{93097a3 u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity t8}
 == 8. Export-Knopf der Web-App
-übersprungen: Export-Knopf – Live-Seite noch ohne neuen Web-Code (Brücke selbst: Schritt 4)
+übersprungen: Export-Knopf (die Brücke selbst prüft Schritt 4) – Live-Seite noch ohne neuen Web-Code
 == 9. Wechsel in den Hintergrund erreicht die Seite sofort
 OK: dieselbe Seite wie vor dem Wechsel
 OK: visibilitychange: hidden, dann visible
@@ -57,8 +57,8 @@ Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.L
 Status: ok
 LaunchState: COLD
 Activity: de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity
-TotalTime: 1523
-WaitTime: 1570
+TotalTime: 823
+WaitTime: 854
 Complete
 OK: Markierung nach dem Löschen der Chrome-Daten noch da
 Screenshot: 6-nach-chrome-loeschen.png
