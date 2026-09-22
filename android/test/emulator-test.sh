@@ -69,21 +69,38 @@ symbol_antippen() {
     -n "$PAKET/de.lemaproyal.fitness.MainActivity"
 }
 
+# Adresse der Offline-Seite, falls die App sie gerade zeigt (sonst leer).
+offline_seite() {
+  curl -s http://localhost:9222/json | grep -o '"url": *"file:///android_asset/offline.html[^"]*"' | head -1 || true
+}
+
 app_starten() {
   symbol_antippen >> "$PROTOKOLL"
   devtools_verbinden
+  # Direkt nach dem Emulator-Start scheitert der erste Aufruf gelegentlich (belegt:
+  # ERR_NAME_NOT_RESOLVED). Dann wie ein Nutzer „Erneut versuchen“ tippen – das prüft
+  # zugleich die Offline-Seite. Jeder Versuch steht mit Grund im Protokoll.
+  local versuch offline
+  for versuch in 1 2 3; do
+    sleep 3
+    offline=$(offline_seite)
+    [ -z "$offline" ] && break
+    notiz "Offline-Seite beim Start ($versuch. Mal): $offline"
+    tippen_auf "(text|content-desc)" "Erneut versuchen"
+  done
   seite_abwarten ""
 }
 
-# Tippt auf die Schaltfläche mit dieser Kennung (z. B. android:id/button1 = OK).
+# Tippt auf das Element mit diesem Merkmal, z. B. tippen_auf resource-id android:id/button1
+# (OK im Dialog) oder tippen_auf "(text|content-desc)" "Erneut versuchen".
 tippen_auf() {
   # Nicht nach /sdcard – dort tauchte die Datei in der Dateiauswahl auf.
   adb shell uiautomator dump /data/local/tmp/ansicht.xml > /dev/null
   local grenzen
   grenzen=$(adb shell cat /data/local/tmp/ansicht.xml | tr -d '\r' \
-    | grep -o "resource-id=\"$1\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" \
+    | grep -oE "$1=\"$2\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" \
     | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | head -1 || true)
-  [ -n "$grenzen" ] || fehler "Schaltfläche $1 nicht gefunden"
+  [ -n "$grenzen" ] || fehler "Element $1=$2 nicht gefunden"
   read -r x1 y1 x2 y2 <<< "$(echo "$grenzen" | tr -c '0-9' ' ')"
   adb shell input tap $(( (x1 + x2) / 2 )) $(( (y1 + y2) / 2 ))
 }
@@ -98,15 +115,11 @@ uebersprungen() {
 }
 
 schritt "0. Warten, bis der Emulator Internet hat"
-# Ein frisch gestarteter Emulator ist manchmal noch offline oder kann keine Namen
-# auflösen – die App zeigte dann zu Recht ihre Offline-Seite, der Test wäre aber
-# vom Zufall abhängig.
+# Ein frisch gestarteter Emulator ist manchmal noch offline. Scheitert danach noch
+# die Namensauflösung, fängt app_starten das über die Offline-Seite der App ab.
 for versuch in $(seq 1 60); do
   # VALIDATED setzt Android erst, wenn seine eigene Prüfung ins Internet geklappt hat.
-  # ping löst den Namen zuerst auf und schreibt dann „PING name (IP-Adresse)“ – ob die
-  # Antwort durchkommt, ist egal (ICMP ist im Emulator oft gesperrt).
-  if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED" \
-     && adb shell ping -c 1 -W 1 lemaproyal.github.io 2>&1 | grep -qE "^PING [^ ]+ \([0-9.]+\)"; then
+  if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED"; then
     notiz "online nach $versuch Versuch(en)"
     break
   fi
@@ -150,7 +163,7 @@ schritt "5. Bestätigungsdialog (confirm) mit OK"
 js "setTimeout(() => { window.dialogAntwort = confirm('Emulator-Test: Dialog sichtbar?'); }, 0); return true" > /dev/null || fehler "Dialog ließ sich nicht öffnen"
 sleep 2
 bild "2-dialog"
-tippen_auf "android:id/button1"
+tippen_auf resource-id "android:id/button1"
 sleep 1
 erwarte "confirm() liefert nach OK true" "$(js 'return window.dialogAntwort')" "true"
 
