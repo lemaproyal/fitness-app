@@ -17,7 +17,7 @@ abweichend() {
   local datei
   for datei in "${DATEIEN[@]}"; do
     # Zeitstempel in der Adresse umgeht Zwischenspeicher auf dem Weg.
-    if ! curl -sf "$ADRESSE$datei?t=$(date +%s)" | cmp -s - "$datei"; then
+    if ! curl -sf --max-time 20 "$ADRESSE$datei?t=$(date +%s)" | cmp -s - "$datei"; then
       echo "$datei"
       return 0
     fi

@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
 final class DateiBruecke implements WebViewCompat.WebMessageListener {
 
     private static final String NAME_IM_BROWSER = "FitnessAndroid";
-    // Eine Sicherung kann mehrere Megabyte haben – Schreiben blockiert sonst die Oberfläche.
+    // Eine Sicherung kann mehrere Megabyte haben – Zerlegen und Schreiben blockierten sonst die Oberfläche.
     // Statisch: Ein Thread für die ganze App, auch wenn Android die Activity neu erzeugt.
     private static final ExecutorService SCHREIBER = Executors.newSingleThreadExecutor();
 
@@ -60,16 +60,18 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
     public void onPostMessage(@NonNull WebView ansicht, @NonNull WebMessageCompat nachricht,
                               @NonNull Uri herkunft, boolean istHauptseite,
                               @NonNull JavaScriptReplyProxy antwort) {
-        if (!istHauptseite || nachricht.getData() == null) return;
-        JSONObject auftrag;
-        try {
-            auftrag = new JSONObject(nachricht.getData());
-        } catch (JSONException e) {
-            return; // Kein Auftrag der Web-App – nichts, worauf sie wartet.
-        }
-        if (!"dateiSpeichern".equals(auftrag.optString("aktion"))) return;
+        String text = nachricht.getData();
+        if (!istHauptseite || text == null) return;
 
+        // Auch das Zerlegen im Hintergrund – die Nachricht enthält die ganze Sicherung.
         SCHREIBER.execute(() -> {
+            JSONObject auftrag;
+            try {
+                auftrag = new JSONObject(text);
+            } catch (JSONException e) {
+                return; // Kein Auftrag der Web-App – nichts, worauf sie wartet.
+            }
+            if (!"dateiSpeichern".equals(auftrag.optString("aktion"))) return;
             JSONObject ergebnis = ausfuehren(auftrag);
             // Antworten darf nur der UI-Thread.
             ansicht.post(() -> antwort.postMessage(ergebnis.toString()));
@@ -136,10 +138,13 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
         }
     }
 
+    /** Die Datei ist hier schon gespeichert – scheitert nur die Namensabfrage, zählt das nicht als Fehler. */
     private static String tatsaechlicherName(ContentResolver speicher, Uri ziel, String vorgabe) {
         try (Cursor c = speicher.query(ziel, new String[]{MediaStore.Downloads.DISPLAY_NAME},
                 null, null, null)) {
             return c != null && c.moveToFirst() ? c.getString(0) : vorgabe;
+        } catch (RuntimeException e) {
+            return vorgabe;
         }
     }
 }

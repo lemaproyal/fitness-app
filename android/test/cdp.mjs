@@ -48,7 +48,8 @@ let kontextId;
 if (iframeHerkunft) {
   // Runtime.enable meldet alle vorhandenen Ausführungskontexte, auch die der iframes.
   await senden("Runtime.enable");
-  kontextId = kontexte.find(k => k.origin === iframeHerkunft)?.id;
+  // Nur der Hauptkontext des iframes – Nebenkontexte (z. B. isolierte Welten) sehen anderes.
+  kontextId = kontexte.find(k => k.origin === iframeHerkunft && k.auxData?.isDefault)?.id;
   if (!kontextId) {
     console.error("Kein iframe mit Herkunft", iframeHerkunft, "– vorhanden:",
                   [...new Set(kontexte.map(k => k.origin))].join(", "));

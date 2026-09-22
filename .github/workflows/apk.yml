@@ -89,6 +89,7 @@ jobs:
       # der Weg zur signierten APK bei jedem Lauf geprüft, veröffentlicht wird dann nichts.
       - name: Signierte APK bauen und prüfen
         id: signiert
+        shell: bash   # mit pipefail: sonst verdeckt tee einen Fehler von apksigner
         env:
           SIGNATUR_BASE64: ${{ secrets.SIGNATUR_BASE64 }}
           SIGNATUR_PASSWORT: ${{ secrets.SIGNATUR_PASSWORT }}

@@ -11,7 +11,7 @@ import { aufbereiten, aufbereitenLink, schleifeAbspielen,
 import { schnittleisteVerbinden } from "./schnitt.js";
 import { spielerErzeugen } from "./youtube.js";
 import { serviceWorkerAnmelden } from "./pwa.js";
-import { dateiAusgeben } from "./datei.js";
+import { dateiAusgeben, inAndroidApp } from "./datei.js";
 
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? "").replace(/[&<>"']/g, z =>
@@ -139,7 +139,7 @@ async function statusAktualisieren() {
   $("status").innerHTML =
     `<b>${info.anzahlUebungen}</b> Übungen · <b>${info.anzahlMedien}</b> mit Video · ` +
     `${groesseFormatieren(info.belegtVonMedien)}` +
-    (info.dauerhaft ? " · dauerhaft gespeichert" : "");
+    (info.dauerhaft || inAndroidApp() ? " · dauerhaft gespeichert" : "");
 }
 
 async function neuLaden() {
@@ -460,9 +460,18 @@ async function werkzeugeOeffnen() {
   $("speicherInfo").textContent =
     `${info.anzahlMedien} Videos belegen ${groesseFormatieren(info.belegtVonMedien)}, ` +
     `insgesamt belegt ${groesseFormatieren(info.belegtGesamt)}${anteil}. ` +
-    (info.dauerhaft ? "Dauerhafte Speicherung ist aktiv." : "Dauerhafte Speicherung ist nicht aktiv.");
+    speicherHinweis(info.dauerhaft);
+  // In der Android-App liegen die Daten ohnehin im eigenen Speicher der App; die
+  // Browser-Erlaubnis dort ist bedeutungslos, ihr Rat („zum Startbildschirm
+  // hinzufügen“) führte zurück in den Speicher von Chrome.
+  $("btnPersistent").hidden = inAndroidApp();
   $("btnPersistent").disabled = info.dauerhaft;
   $("dlgMehr").showModal();
+}
+
+function speicherHinweis(dauerhaft) {
+  if (inAndroidApp()) return "Die Daten liegen im eigenen Speicher der App.";
+  return dauerhaft ? "Dauerhafte Speicherung ist aktiv." : "Dauerhafte Speicherung ist nicht aktiv.";
 }
 
 async function seedLaden() {

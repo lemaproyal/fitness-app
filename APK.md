@@ -40,14 +40,16 @@ installieren.
    Web-Dateien (`src/datei.js`, `src/pwa.js`, `sw.js`) auf GitHub Pages. Ohne
    sie kann die APK nicht exportieren.
 3. Unter **Releases** (rechte Spalte auf der Repository-Seite) steht „Fitness-App
-   für Android“ mit heutigem Datum. Ein grüner Lauf allein reicht nicht – ohne
+   für Android“, und in dessen Beschreibung „Stand: Commit … vom <heutiges Datum>“. Ein grüner Lauf allein reicht nicht – ohne
    Secrets ist er auch grün, veröffentlicht aber nichts. Fehlt das Release:
    **Actions → Android-APK → Run workflow** (Branch `main`).
 
 ## Am Handy installieren
 
 1. **Erst in der alten App sichern:** Einstellungen → `⋯` → **Exportieren**.
-   Die APK beginnt mit einer leeren Datenbank.
+   Die APK beginnt mit einer leeren Datenbank. Selbst hochgeladene Videodateien
+   sind in der Sicherung nicht enthalten (verlinkte YouTube-Videos schon) – die
+   müssten in der APK neu hinzugefügt werden.
 2. Am Handy öffnen:
    https://github.com/lemaproyal/fitness-app/releases/download/apk/fitness.apk
 3. Die heruntergeladene Datei antippen. Beim ersten Mal fragt Android, ob der
@@ -55,8 +57,9 @@ installieren.
    Google Play Protect warnt möglicherweise vor einer unbekannten App → **Trotzdem
    installieren**. Die App stammt von dir selbst.
 4. App „Fitness“ öffnen → Einstellungen → `⋯` → **Importieren** → Sicherung wählen.
-5. Die alte Web-App vom Startbildschirm entfernen, damit nicht aus Versehen dort
-   weitertrainiert wird.
+5. **Nachsehen**, ob Übungen und Verlauf in der APK vollständig da sind.
+6. Erst dann die alte Web-App vom Startbildschirm entfernen, damit nicht aus
+   Versehen dort weitertrainiert wird.
 
 ## Sichern bleibt sinnvoll
 

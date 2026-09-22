@@ -23,3 +23,7 @@ index.html, Installationshinweis (src/pwa.js installationBeobachten)
   mit window.FitnessAndroid → bereitsInstalliert=true (Hinweis erscheint nicht)
 
 node werkzeuge/pwa-pruefen.js → "Alles vollständig — die App ist installierbar."
+
+verwaltung.html, Menü ⋯ – Speicherhinweis (nach Review Runde 3)
+  normaler Browser        → "Dauerhafte Speicherung ist nicht aktiv.", Knopf "Dauerhaft speichern anfordern" sichtbar (unverändert)
+  mit window.FitnessAndroid → "Die Daten liegen im eigenen Speicher der App.", Knopf ausgeblendet

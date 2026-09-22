@@ -141,3 +141,28 @@ Bewusst nicht umgesetzt:
   Kriterium entsprechend eingeschränkt.
 - Kurzes Aufblitzen der WebView-Fehlerseite beim zweiten Fehlschlag – rein kosmetisch.
 
+### Runde 3 – Score 4/5 (Android-App 4, Workflow/Tests 4, Web/Doku 4)
+Zwischen Runde 2 und 3: Ein Lauf scheiterte an `ERR_NAME_NOT_RESOLVED` (Fehlergrund dank der neuen
+Anzeige auf der Offline-Seite sichtbar) – der Emulator konnte direkt nach dem Start keine Namen
+auflösen. Gegenmittel: feste DNS-Server (`emulator-options … -dns-server`) und Warten auf
+Namensauflösung vor dem App-Start; Lauf 35748976476 danach grün. Außerdem war die Workflow-Datei
+einmal ungültig (Steuerzeichen durch ein Ersetzungsskript) – behoben, seitdem vor jedem Push per
+`npx js-yaml` geprüft.
+Behoben:
+- App: Nachricht der Brücke wird im Hintergrund zerlegt; nur die Namensabfrage gescheitert ≠
+  Speichern gescheitert; Absturz des Darstellungsprozesses baut die App neu auf statt sie zu
+  beenden (`onRenderProcessGone`); `launchMode="singleTask"` gegen ein zweites Fenster nach
+  „Darüber installieren → Öffnen“; wiederhergestellte Offline-Seite lädt stattdessen die App.
+- Workflow/Test: `shell: bash` (pipefail) beim Signieren; DNS-Bereitschaft positiv geprüft
+  (`PING name (IP)`); iframe-Prüfung nur im Hauptkontext; `curl --max-time`.
+- Web: In der APK zeigt das Menü „Die Daten liegen im eigenen Speicher der App.“ statt
+  „Dauerhafte Speicherung ist nicht aktiv“, der Knopf mit dem Rat „zum Startbildschirm
+  hinzufügen“ ist dort ausgeblendet (lokal belegt, nachher-web-lokal.txt).
+- Doku: `APK.md` – eigene Videodateien sind nicht in der Sicherung, Import erst prüfen, dann alte
+  Web-App entfernen, Release-Datum steht in der Beschreibung; `anleitung.html` Kennzahlen 21
+  Dateien / 180 KB.
+Bewusst hingenommen:
+- Zwei schnelle Pushes auf main mit Android-Änderungen: der ältere Lauf wartet vergeblich auf
+  Pages und wird rot – kein falsches Release, nur ein roter Lauf.
+- `inAndroidApp()` bleibt in `datei.js` (Entscheidung aus Runde 1).
+

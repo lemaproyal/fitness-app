@@ -103,10 +103,10 @@ schritt "0. Warten, bis der Emulator Internet hat"
 # vom Zufall abhängig.
 for versuch in $(seq 1 60); do
   # VALIDATED setzt Android erst, wenn seine eigene Prüfung ins Internet geklappt hat.
-  # ping löst den Namen zuerst auf; ob die Antwort durchkommt, ist egal (ICMP ist im
-  # Emulator oft gesperrt) – nur „unknown host“ heißt: DNS noch nicht bereit.
+  # ping löst den Namen zuerst auf und schreibt dann „PING name (IP-Adresse)“ – ob die
+  # Antwort durchkommt, ist egal (ICMP ist im Emulator oft gesperrt).
   if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED" \
-     && ! adb shell ping -c 1 -W 1 lemaproyal.github.io 2>&1 | grep -qi "unknown host"; then
+     && adb shell ping -c 1 -W 1 lemaproyal.github.io 2>&1 | grep -qE "^PING [^ ]+ \([0-9.]+\)"; then
     notiz "online nach $versuch Versuch(en)"
     break
   fi

@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.JsResult;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -51,6 +52,7 @@ public class MainActivity extends Activity {
     private View vollbildAnsicht;
     private WebChromeClient.CustomViewCallback vollbildRueckruf;
     private boolean ladenWiederholt;
+    private boolean darstellungAbgestuerzt;
     private final Runnable neuLaden = () -> webView.reload();
 
     @Override
@@ -71,7 +73,9 @@ public class MainActivity extends Activity {
         DateiBruecke.anmelden(webView, this);
         setContentView(webView);
 
-        if (zustand == null || webView.restoreState(zustand) == null) {
+        boolean wiederhergestellt = zustand != null && webView.restoreState(zustand) != null;
+        // Eine wiederhergestellte Offline-Seite wäre veraltet – inzwischen gibt es vielleicht Netz.
+        if (!wiederhergestellt || aufOfflineSeite()) {
             webView.loadUrl(START_URL);
         }
     }
@@ -102,14 +106,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle zustand) {
         super.onSaveInstanceState(zustand);
-        webView.saveState(zustand);
+        if (!darstellungAbgestuerzt) webView.saveState(zustand);
+    }
+
+    private boolean aufOfflineSeite() {
+        return webView.getUrl() != null && webView.getUrl().startsWith(OFFLINE_SEITE);
     }
 
     @Override
     public void onBackPressed() {
         if (vollbildAnsicht != null) {
             vollbildBeenden();
-        } else if (webView.getUrl() != null && webView.getUrl().startsWith(OFFLINE_SEITE)) {
+        } else if (aufOfflineSeite()) {
             // Ein Schritt zurück wäre die Seite, die eben nicht laden konnte – sie
             // führte sofort wieder hierher. Also an ihr vorbei oder ganz hinaus.
             if (webView.canGoBackOrForward(-2)) webView.goBackOrForward(-2);
@@ -132,7 +140,7 @@ public class MainActivity extends Activity {
     }
 
     private void systemleistenZeigen(boolean zeigen) {
-        // Unter Android 11 fehlt die Schnittstelle; dort bleiben die Leisten sichtbar.
+        // Erst ab Android 11 gibt es die Schnittstelle; unter Android 10 bleiben die Leisten sichtbar.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
         WindowInsetsController leisten = getWindow().getInsetsController();
         if (zeigen) {
@@ -191,6 +199,16 @@ public class MainActivity extends Activity {
             // Der Fehlergrund steht klein auf der Seite – hilft beim Eingrenzen.
             ansicht.setVisibility(View.VISIBLE);
             ansicht.loadUrl(OFFLINE_SEITE + "?grund=" + Uri.encode(String.valueOf(fehler.getDescription())));
+        }
+
+        @Override
+        public boolean onRenderProcessGone(WebView ansicht, RenderProcessGoneDetail details) {
+            // Der Teil der WebView, der die Seite darstellt, ist abgestürzt oder wurde bei
+            // Speichermangel beendet. Ohne diese Methode beendet Android die ganze App –
+            // so baut sie sich neu auf. Die Daten liegen sicher in IndexedDB.
+            darstellungAbgestuerzt = true;
+            recreate();
+            return true;
         }
 
         @Override
