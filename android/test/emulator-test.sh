@@ -80,6 +80,19 @@ neuer_webcode_live() {
   [ "$(js "try { return (await (await fetch('src/datei.js', { cache: 'no-store' })).text()).includes('dateiAusgeben') } catch { return false }")" = "true" ]
 }
 
+schritt "0. Warten, bis der Emulator Internet hat"
+# Ein frisch gestarteter Emulator ist manchmal noch offline – die App zeigte dann
+# zu Recht ihre Offline-Seite, der Test wäre aber vom Zufall abhängig.
+for versuch in $(seq 1 60); do
+  # VALIDATED setzt Android erst, wenn seine eigene Prüfung ins Internet geklappt hat.
+  if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED"; then
+    notiz "online nach $versuch Versuch(en)"
+    break
+  fi
+  [ "$versuch" = 60 ] && fehler "Emulator bekommt kein Internet"
+  sleep 2
+done
+
 schritt "1. APK installieren und starten"
 adb install -r "$APK" | tee -a "$PROTOKOLL"
 app_starten

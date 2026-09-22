@@ -70,3 +70,35 @@ Android SDK installiert sind.
   auf `main` (GitHub Pages) ist.
 
 ## Review-Runden
+
+### Runde 1 – Score 3/5 (drei getrennte Prüfer: Android-App 3, Workflow/Tests 3, Web/Doku 3)
+Behoben:
+- Update-Pfad: `versionCode` = Commit-Zahl statt Laufnummer (Abbruch bei flachem Checkout);
+  Test-APK als eigene App `de.lemaproyal.fitness.test` („Fitness (Test)“), damit ihr
+  wechselnder Schlüssel nie die echte App blockiert; Fingerabdruck des echten Schlüssels in
+  `android/signatur-fingerabdruck.txt`, der Lauf vergleicht ihn.
+- Signierter Build läuft jetzt in jedem Lauf (ohne Secrets mit Wegwerf-Schlüssel + `apksigner verify`),
+  Release in eigenem Job mit Schreibrechten, `concurrency`, Release wird nur aktualisiert
+  (`upload --clobber`) statt gelöscht.
+- App: WebView `onPause/onResume/destroy` (Hintergrundwechsel erreicht die Seite → Training sichert),
+  iframe-Navigation bleibt im iframe, nur http/https nach außen, Zurück-Schleife auf Offline-Seite,
+  Systemleisten im Video-Vollbild aus, Schreiben im Hintergrund-Thread, halbe Dateien werden auch bei
+  RuntimeException entfernt, `allowBackup` bewusst gesetzt, Hinweis zu targetSdk 36.
+- Export meldet ehrlich: die App antwortet {ok, name | fehler}; Web zeigt „in „Downloads“ gespeichert (…)“
+  bzw. „fehlgeschlagen: …“; Zeitlimit 15 s; WebView ohne Brücke meldet Fehler statt „heruntergeladen“.
+  `inAndroidApp()` einmal in `datei.js`, von `pwa.js` genutzt.
+- Tests: OK im Dialog antippen und `true` erwarten; Brücke im YouTube-iframe muss fehlen;
+  Antwort der Brücke geprüft; Hintergrundwechsel geprüft; Export-Knopf und Installationshinweis
+  laufen, sobald der neue Web-Code live ist (vorher ausdrücklich „übersprungen“); Seitenwechsel
+  wartet auf den richtigen Pfad; Zeitlimit in `cdp.mjs`.
+- Doku: `anleitung.html` Upload-Liste mit `src/datei.js` (21 Einträge), `VEROEFFENTLICHEN.md`
+  verweist auf APK, `APK.md` mit Voraussetzungen vor der Installation; Schlüssel nach
+  `Desktop\AI Cloud\Fitness-Signatur` (außerhalb des Projektordners – der Nutzer lädt per
+  Browser hoch, da hilft `.gitignore` nicht); `.gitignore` um `*.pem`, `passwort.txt`,
+  `signatur-base64.txt` ergänzt; `veroeffentlichen/` neu gebaut.
+Bewusst nicht umgesetzt:
+- Dateiname mit Datum doppelt (`verlauf.js`/`verwaltung.js`) – bestand schon vorher, nicht Teil der Aufgabe.
+- Actions auf Commit-SHA pinnen – Geschmacksfrage, Schreibrechte sind bereits auf den Release-Job begrenzt.
+- `setup-gradle` bleibt auf v4 (nur Hinweis zu Node 20, keine Funktionsstörung).
+- Erlaubte Herkunft `https://lemaproyal.github.io` gilt für alle Pages-Repos des Nutzers – alle gehören ihm.
+
