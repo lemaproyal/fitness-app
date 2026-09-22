@@ -12,6 +12,7 @@
 import { protokoll, uebungen, exportieren, protokollCsv } from "./db.js";
 import { tagNach } from "./stammdaten.js";
 import { serviceWorkerAnmelden } from "./pwa.js";
+import { dateiSpeichern } from "./datei.js";
 
 const $ = id => document.getElementById(id);
 const ZEICHEN = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -141,28 +142,19 @@ function zeichnen() {
 
 // ------------------------------------------------------------------- Export
 
-function herunterladen(dateiname, inhalt, typ) {
-  const blob = new Blob([inhalt], { type: typ });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = dateiname;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
 const heute = () => new Date().toISOString().slice(0, 10);
 
 async function csvExport() {
   if (!einheiten.length) return melden("Noch nichts zu exportieren.");
-  herunterladen(`fitness-trainings-${heute()}.csv`, await protokollCsv(),
-                "text/csv;charset=utf-8");
+  dateiSpeichern(`fitness-trainings-${heute()}.csv`, await protokollCsv(),
+                 "text/csv;charset=utf-8");
   melden("CSV heruntergeladen.");
 }
 
 async function jsonExport() {
   const daten = await exportieren();
-  herunterladen(`fitness-sicherung-${heute()}.json`, JSON.stringify(daten, null, 2),
-                "application/json");
+  dateiSpeichern(`fitness-sicherung-${heute()}.json`, JSON.stringify(daten, null, 2),
+                 "application/json");
   melden("Sicherung heruntergeladen.");
 }
 
