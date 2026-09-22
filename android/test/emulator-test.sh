@@ -49,11 +49,19 @@ devtools_verbinden() {
   adb forward tcp:9222 "localabstract:webview_devtools_remote_$pid" > /dev/null
 }
 
+# Ist die Seite mit diesem Dateinamen fertig geladen – und wirklich die App? Scheitert ein
+# Aufruf, zeigt die WebView kurz ihre eigene Fehlerseite unter derselben Adresse; die hat
+# kein Programm-Skript der App (belegt: so rutschte ein Lauf auf die Offline-Seite durch).
+app_seite_fertig() {
+  [ "$(js "return location.pathname.endsWith('/$1') && document.readyState === 'complete'
+             && !!document.querySelector('script[type=module][src]')" 2>/dev/null || true)" = "true" ]
+}
+
 # Wartet, bis die Seite mit diesem Dateinamen fertig geladen ist – nicht die vorige.
 seite_abwarten() {
   local datei="$1"
   for _ in $(seq 1 60); do
-    if [ "$(js "return location.pathname.endsWith('/$datei') && document.readyState" 2>/dev/null || true)" = '"complete"' ]; then
+    if app_seite_fertig "$datei"; then
       return 0
     fi
     sleep 2
@@ -89,7 +97,7 @@ startseite_abwarten() {
   local offline
   TIPPS=0
   for _ in $(seq 1 60); do
-    if [ "$(js "return location.pathname.endsWith('/') && document.readyState" 2>/dev/null || true)" = '"complete"' ]; then
+    if app_seite_fertig ""; then
       return 0
     fi
     offline=$(offline_seite)
