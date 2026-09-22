@@ -5,8 +5,8 @@ Starting: Intent { cmp=de.lemaproyal.fitness/.MainActivity }
 Status: ok
 LaunchState: COLD
 Activity: de.lemaproyal.fitness/.MainActivity
-TotalTime: 3202
-WaitTime: 3249
+TotalTime: 1841
+WaitTime: 1856
 Complete
 Adresse: "https://lemaproyal.github.io/fitness-app/"
 Titel:   "Fitness"
@@ -18,7 +18,7 @@ window.FitnessAndroid ist vorhanden
 == 4. Export in den Download-Ordner
 Screenshot: 2-export-meldung.png
 total 8
--rwxrwx--- 1 u0_a175 media_rw 13 2026-09-22 11:45 fitness-emulator-test.json
+-rwxrwx--- 1 u0_a170 media_rw 13 2026-09-22 14:18 fitness-emulator-test.json
 Inhalt: {"test":true}
 == 5. Bestätigungsdialog (confirm)
 Screenshot: 3-dialog.png
@@ -27,7 +27,7 @@ Dialog erschienen und mit Zurück abgebrochen (Antwort false)
 Screenshot: 4-youtube.png
 == 7. Dateiauswahl für den Import
 Screenshot: 5-dateiauswahl.png
-Vorderste Ansicht:     topResumedActivity=ActivityRecord{ca94f4c u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity t8}
+Vorderste Ansicht:     topResumedActivity=ActivityRecord{fc50da9 u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity t8}
 == 8. Chrome-Daten löschen, App neu starten
 Speicherort der App-Datenbank (privat, nur für diese App):
 Cookies
@@ -48,8 +48,8 @@ Starting: Intent { cmp=de.lemaproyal.fitness/.MainActivity }
 Status: ok
 LaunchState: COLD
 Activity: de.lemaproyal.fitness/.MainActivity
-TotalTime: 1082
-WaitTime: 1085
+TotalTime: 1591
+WaitTime: 1594
 Complete
 Markierung nach dem Löschen: "Emulator-Test Übung"
 Screenshot: 6-nach-chrome-loeschen.png
