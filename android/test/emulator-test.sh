@@ -55,6 +55,8 @@ seite_abwarten() {
     fi
     sleep 2
   done
+  notiz "Offene Seiten der App: $(curl -s http://localhost:9222/json | grep -o '"url": *"[^"]*"' | tr '
+' ' ')"
   fehler "Seite $datei lädt nicht"
 }
 

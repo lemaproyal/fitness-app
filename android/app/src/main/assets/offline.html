@@ -9,6 +9,7 @@
          background: #121418; color: #e8e8e8; font: 17px/1.5 system-ui, sans-serif; }
   main { max-width: 22rem; padding: 1.5rem; text-align: center; }
   h1 { font-size: 1.3rem; }
+  small { display: block; margin-top: 1.5rem; color: #8a8f98; font-size: .8rem; }
   a { display: inline-block; margin-top: 1rem; padding: .8rem 1.4rem; border-radius: .6rem;
       background: #d4462a; color: #fff; text-decoration: none; font-weight: 600; }
 </style>
@@ -19,6 +20,11 @@
   <p>Beim allerersten Start lädt die App sich einmal aus dem Internet. Danach
      läuft sie auch ohne Verbindung.</p>
   <a href="https://lemaproyal.github.io/fitness-app/">Erneut versuchen</a>
+  <small id="grund"></small>
 </main>
+<script>
+  document.getElementById("grund").textContent =
+    new URLSearchParams(location.search).get("grund") || "";
+</script>
 </body>
 </html>

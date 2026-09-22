@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         if (vollbildAnsicht != null) {
             vollbildBeenden();
-        } else if (OFFLINE_SEITE.equals(webView.getUrl())) {
+        } else if (webView.getUrl() != null && webView.getUrl().startsWith(OFFLINE_SEITE)) {
             // Ein Schritt zurück wäre die Seite, die eben nicht laden konnte – sie
             // führte sofort wieder hierher. Also an ihr vorbei oder ganz hinaus.
             if (webView.canGoBackOrForward(-2)) webView.goBackOrForward(-2);
@@ -167,7 +167,10 @@ public class MainActivity extends Activity {
         public void onReceivedError(WebView ansicht, WebResourceRequest anfrage, WebResourceError fehler) {
             // Hauptseite nicht ladbar – meist beim allerersten Start ohne Verbindung,
             // solange der Service Worker die App noch nicht zwischengespeichert hat.
-            if (anfrage.isForMainFrame()) ansicht.loadUrl(OFFLINE_SEITE);
+            // Der Fehlergrund steht klein auf der Seite – hilft beim Eingrenzen.
+            if (anfrage.isForMainFrame()) {
+                ansicht.loadUrl(OFFLINE_SEITE + "?grund=" + Uri.encode(String.valueOf(fehler.getDescription())));
+            }
         }
     }
 
