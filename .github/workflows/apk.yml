@@ -92,9 +92,8 @@ jobs:
         run: |
           export SIGNATUR_DATEI="$RUNNER_TEMP/signatur.p12"
           if [ -n "$SIGNATUR_BASE64" ]; then
-            # Zeilenumbrüche (auch Windows-) aus dem eingefügten Secret entfernen.
-            printf '%s' "$SIGNATUR_BASE64" | tr -d '
- ' | base64 -d > "$SIGNATUR_DATEI"
+            # Zeilenumbrüche (auch Windows-CR) aus dem eingefügten Secret entfernen.
+            printf '%s' "$SIGNATUR_BASE64" | tr -d '\r\n ' | base64 -d > "$SIGNATUR_DATEI"
             echo "echt=ja" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Kein Signaturschlüssel hinterlegt (siehe APK.md) – Probelauf mit Wegwerf-Schlüssel, nichts wird veröffentlicht."
