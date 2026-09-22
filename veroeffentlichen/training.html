@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d4462a">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Training</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --ink: #16181d; --muted: #62676f;
+    --line: #dfe2e7; --accent: #d4462a; --chip: #eef0f3;
+    --gut: #2f7d5e; --tagfarbe: #d4462a; --gewaehlt-grund: #f2f8f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121418; --card: #1c1f25; --ink: #eceef1; --muted: #9aa1ab;
+      --line: #2c313a; --accent: #ff6b47; --chip: #262b33;
+      --gut: #4ea882; --gewaehlt-grund: #1a2420;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15.5px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: 40px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 14px; }
+
+  /* ---------- Kopf mit Uhr ---------- */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: max(12px, env(safe-area-inset-top)) 0 12px;
+  }
+  .kopfzeile { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .zurueck {
+    color: var(--muted); text-decoration: none; font-size: 1.25rem;
+    line-height: 1; padding: 3px 7px; border-radius: 6px;
+  }
+  .zurueck:hover { background: var(--chip); color: var(--ink); }
+  h1 {
+    font-size: 1.2rem; margin: 0; letter-spacing: -0.02em;
+    border-left: 4px solid var(--tagfarbe); padding-left: 9px;
+  }
+  .kopfzeile .rest { margin-left: auto; font-size: 0.8rem; color: var(--muted); }
+
+  .uhr-leiste {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .uhr {
+    font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; line-height: 1.1; flex: 1 1 auto;
+  }
+  .uhr.laeuft { color: var(--gut); }
+  .uhr small { display: block; font-size: 0.68rem; font-weight: 500;
+               letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  button {
+    font: inherit; cursor: pointer; border: none; border-radius: 9px;
+    padding: 11px 20px; font-weight: 600; background: var(--chip); color: var(--ink);
+  }
+  button.start { background: var(--gut); color: #fff; }
+  button.stopp { background: var(--accent); color: #fff; }
+  button.leise { background: none; color: var(--muted); font-weight: 500; padding: 8px 10px; }
+  button:disabled { opacity: 0.45; cursor: default; }
+
+  /* ---------- Blöcke und Bereiche ---------- */
+  .block { margin-top: 26px; }
+  .block > h2 {
+    font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em;
+    margin: 0 0 10px; padding-bottom: 6px;
+    border-bottom: 2px solid var(--tagfarbe);
+  }
+  .bereich { margin-bottom: 16px; }
+  .bereich > h3 {
+    display: flex; align-items: baseline; gap: 8px;
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--muted); margin: 0 0 7px 2px; font-weight: 600;
+  }
+  .vorgabe {
+    text-transform: none; letter-spacing: 0;
+    font-size: 0.72rem; font-weight: 500; color: var(--tagfarbe);
+  }
+  .zaehler {
+    margin-left: auto; text-transform: none; letter-spacing: 0;
+    font-size: 0.72rem; font-weight: 500;
+  }
+  .zaehler.aktiv { color: var(--gut); font-weight: 600; }
+  .bereich-leer { margin: 0 0 0 2px; font-size: 0.88rem; color: var(--muted); }
+  .bereich-leer a { color: var(--accent); }
+
+  /* ---------- Übungszeilen ---------- */
+  .uebung {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 11px; margin-bottom: 6px; overflow: hidden;
+  }
+  .uebung.gewaehlt { border-color: var(--gut); background: var(--gewaehlt-grund); }
+  .uebung.offen { border-color: var(--tagfarbe); }
+  .zeile { display: flex; align-items: center; gap: 10px; padding: 9px 11px; }
+  .zeile button {
+    background: none; border: none; color: inherit; font: inherit;
+    padding: 0; border-radius: 0; cursor: pointer; font-weight: 400;
+  }
+  .waehlen {
+    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 7px;
+    border: 2px solid var(--line); display: grid; place-items: center;
+    color: transparent; font-size: 0.82rem;
+  }
+  .uebung.gewaehlt .waehlen { background: var(--gut); border-color: var(--gut); color: #fff; }
+  .uebung.gewaehlt .titel { font-weight: 700; }
+  .oeffnen { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; }
+  .titel { flex: 1 1 auto; min-width: 0; font-weight: 600; font-size: 0.96rem;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .erfasst { flex: 0 0 auto; font-size: 0.79rem; color: var(--muted);
+             font-variant-numeric: tabular-nums; }
+  .uebung.gewaehlt .erfasst { color: var(--gut); font-weight: 600; }
+  .pfeil { flex: 0 0 auto; color: var(--muted); transition: transform 0.15s; }
+  .uebung.offen .pfeil { transform: rotate(90deg); }
+
+  .details { padding: 0 11px 13px; display: none; }
+  .uebung.offen .details { display: block; }
+  .details video, .details iframe, .details .kein-video {
+    display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
+    border: none; border-radius: 9px; background: #000; margin-bottom: 12px;
+  }
+  .details .kein-video {
+    background: var(--chip); color: var(--muted);
+    display: grid; place-items: center; font-size: 0.86rem;
+  }
+  .details h4 {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); margin: 14px 0 5px;
+  }
+  .details ol, .details ul { margin: 0; padding-left: 1.15em; }
+  .details li { margin-bottom: 4px; font-size: 0.93rem; }
+  .details ul li { color: var(--muted); }
+  /* ---------- Sätze erfassen: eine Zeile je Satz, über dem Video ---------- */
+  .saetze { margin-bottom: 10px; }
+  .satz-kopf, .satz {
+    display: grid; grid-template-columns: 1.4rem repeat(3, 1fr) 1.7rem;
+    gap: 6px; align-items: center;
+  }
+  .satz-kopf {
+    font-size: 0.6rem; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--muted);
+    text-align: center; padding-bottom: 3px;
+  }
+  .satz-kopf i { font-style: normal; opacity: 0.7; }
+  .satz { margin-bottom: 5px; }
+  .satz .nr {
+    font-size: 0.78rem; font-weight: 700; color: var(--muted);
+    text-align: center; font-variant-numeric: tabular-nums;
+  }
+  .satz input {
+    font: inherit; font-size: 1.02rem; font-weight: 600; text-align: center;
+    font-variant-numeric: tabular-nums; width: 100%; padding: 9px 2px;
+    border: 1px solid var(--line); border-radius: 9px;
+    background: var(--bg); color: var(--ink); -moz-appearance: textfield;
+  }
+  .satz input::-webkit-outer-spin-button,
+  .satz input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .satz input::placeholder { font-weight: 400; opacity: 0.5; }
+  .satz input:focus,
+  .tagesnotiz textarea:focus {
+    outline: 2px solid var(--tagfarbe); outline-offset: -1px; border-color: transparent;
+  }
+  .satz-weg {
+    background: none; color: var(--muted); font-weight: 400;
+    padding: 7px 0; font-size: 0.92rem; line-height: 1; border-radius: 7px;
+  }
+  .satz-weg:hover { background: var(--chip); color: var(--accent); }
+  .satz-mehr {
+    width: 100%; margin-top: 2px; background: none; color: var(--muted);
+    font-size: 0.83rem; font-weight: 600; padding: 7px 10px;
+    border: 1px dashed var(--line); border-radius: 9px;
+  }
+  .satz-mehr:hover { border-color: var(--tagfarbe); color: var(--tagfarbe); }
+
+  .tagesnotiz {
+    display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px;
+    font-size: 0.63rem; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .tagesnotiz textarea {
+    font: inherit; font-size: 0.95rem; font-weight: 400;
+    letter-spacing: 0; text-transform: none; color: var(--ink);
+    width: 100%; padding: 9px 11px; min-height: 44px; resize: vertical;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--bg);
+    field-sizing: content; /* wächst mit dem Text, wo der Browser es kann */
+  }
+  .tagesnotiz textarea::placeholder { opacity: 0.55; }
+
+  .details .notiz {
+    background: var(--chip); border-radius: 9px; padding: 10px 12px;
+    font-size: 0.9rem; white-space: pre-wrap; margin-top: 12px;
+  }
+
+  .leer { text-align: center; color: var(--muted); padding: 40px 20px; }
+  .leer a { color: var(--accent); }
+  .meldung {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 16px;
+    border-radius: 999px; font-size: 0.88rem; z-index: 50;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .meldung.an { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kopfzeile">
+      <a href="./" class="zurueck" aria-label="Zur Startseite">←</a>
+      <h1 id="titel">Training</h1>
+      <span class="rest" id="fortschritt"></span>
+    </div>
+    <div class="uhr-leiste">
+      <div class="uhr" id="uhr">00:00<small id="uhrText">noch nicht gestartet</small></div>
+      <button type="button" class="start" id="btnStart">Start</button>
+      <button type="button" class="stopp" id="btnStopp" hidden>Stopp</button>
+      <button type="button" class="leise" id="btnVerwerfen" hidden>verwerfen</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="liste"></div>
+</div>
+
+<div class="meldung" id="meldung"></div>
+
+<script type="module" src="./src/training.js"></script>
+</body>
+</html>

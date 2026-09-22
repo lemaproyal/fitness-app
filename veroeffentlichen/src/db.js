@@ -489,6 +489,56 @@ export async function exportieren() {
   };
 }
 
+/**
+ * Das Protokoll als CSV — eine Zeile je Satz.
+ *
+ * Semikolon als Trenner und Komma als Dezimalzeichen, weil Excel und
+ * LibreOffice in deutscher Einstellung genau das erwarten und die Datei sonst
+ * in einer einzigen Spalte landen. Das BOM vorneweg sorgt dafür, dass Umlaute
+ * ankommen — ohne es rät Excel auf die alte Windows-Zeichentabelle.
+ *
+ * Die JSON-Sicherung bleibt das Format zum Zurückspielen; das hier ist zum
+ * Auswerten in der Tabellenkalkulation.
+ */
+export async function protokollCsv() {
+  const [eintraege, alleUebungen] = await Promise.all([protokoll.alle(), uebungen.alle()]);
+  const namen = new Map(alleUebungen.map(u => [u.id, u.name]));
+
+  const zahl = n => (n == null ? "" : String(n).replace(".", ","));
+  // Anführungszeichen im Text werden verdoppelt — so schreibt CSV es vor.
+  const text = t => `"${String(t ?? "").replace(/"/g, '""')}"`;
+
+  const zeilen = [[
+    "Datum", "Uhrzeit", "Tag", "Trainingsdauer (min)",
+    "Übung", "Satz", "WDH", "Gewicht (kg)", "Dauer (s)", "Notiz",
+  ].join(";")];
+
+  const sortiert = [...eintraege].sort((a, b) =>
+    (a.erstelltAm ?? a.datum ?? "").localeCompare(b.erstelltAm ?? b.datum ?? ""));
+
+  for (const e of sortiert) {
+    const d = new Date(e.erstelltAm ?? e.datum);
+    const uhrzeit = Number.isNaN(d.getTime())
+      ? "" : d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    const dauerMin = e.dauerSek == null ? "" : String(Math.round(e.dauerSek / 60));
+    const saetze = e.saetze?.length ? e.saetze : [{}];
+
+    saetze.forEach((satz, i) => {
+      zeilen.push([
+        e.datum ?? "", uhrzeit, e.tag ?? "", dauerMin,
+        text(namen.get(satz.uebungId) ?? satz.uebungId ?? ""),
+        satz.satzNr ?? "",
+        zahl(satz.wiederholungen), zahl(satz.gewichtKg), zahl(satz.dauerSek),
+        // Die Notiz gilt der ganzen Einheit — sie steht nur in der ersten Zeile,
+        // statt sich durch jede Satzzeile zu wiederholen.
+        i === 0 ? text(e.notiz) : "",
+      ].join(";"));
+    });
+  }
+
+  return "\uFEFF" + zeilen.join("\r\n") + "\r\n";
+}
+
 export async function importieren(sicherung, { ersetzen = false } = {}) {
   if (sicherung?.format !== "fitness-app-sicherung") {
     throw new Error("Unbekanntes Dateiformat.");

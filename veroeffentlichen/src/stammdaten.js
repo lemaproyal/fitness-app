@@ -2,6 +2,8 @@
 // Bewusst als Code und nicht in der Datenbank — das sind Struktur, keine Inhalte.
 
 export const KATEGORIEN = [
+  { id: "warmup",     name: "Warm-Up",     tag: "A", farbe: "#7c7a70" },
+  { id: "exit",       name: "Exit",        tag: "A", farbe: "#6f7a78" },
   { id: "plyometrie", name: "Plyometrie",  tag: "A", farbe: "#d4462a" },
   { id: "brust",      name: "Brust",       tag: "A", farbe: "#c2521f" },
   { id: "schulter",   name: "Schulter",    tag: "A", farbe: "#b06010" },
@@ -12,24 +14,30 @@ export const KATEGORIEN = [
   { id: "core",       name: "Core",        tag: "B", farbe: "#5a4a8c" },
 ];
 
-// Jeder Trainingstag besteht aus drei Blöcken, jeder Block aus zwei Bereichen:
-// einer Kraftübung und einer Sprung- beziehungsweise Rumpfübung. Die Bereichsnamen
-// sind innerhalb eines Tages eindeutig und dienen als Schlüssel für die Auswahl.
+// Jeder Trainingstag besteht aus drei Blöcken, in der Regel mit zwei Bereichen:
+// einer Kraftübung und einer Sprung- beziehungsweise Rumpfübung. Block 1 von Tag A
+// trägt zusätzlich das Warm-Up. Die Bereichsnamen sind innerhalb eines Tages
+// eindeutig und dienen als Schlüssel für die Auswahl.
+//
+// `vorgabe` ist reiner Anzeigetext neben dem Bereichsnamen — die empfohlene
+// Satzzahl. Sie steuert nichts, sondern erinnert nur beim Zusammenstellen daran,
+// wie viel in diesem Bereich vorgesehen ist.
 export const TAGE = [
   {
     id: "A", name: "Tag A", untertitel: "Push + Explosiv", farbe: "#d4462a",
     bloecke: [
       { name: "Block 1", bereiche: [
-        { name: "Brust",    kategorie: "brust" },
-        { name: "Jump 1",   kategorie: "plyometrie", slot: true },
+        { name: "Warm-Up",  kategorie: "warmup" },
+        { name: "Brust",    kategorie: "brust",      vorgabe: "2 × 3 Sätze" },
+        { name: "Jump",     kategorie: "plyometrie", vorgabe: "5 Sätze" },
       ]},
       { name: "Block 2", bereiche: [
-        { name: "Schulter", kategorie: "schulter" },
-        { name: "Jump 2",   kategorie: "plyometrie", slot: true },
+        { name: "Schulter", kategorie: "schulter", vorgabe: "2 × 3 Sätze" },
+        { name: "Core",     kategorie: "core" },
       ]},
       { name: "Block 3", bereiche: [
-        { name: "Trizeps",  kategorie: "trizeps" },
-        { name: "Jump 3",   kategorie: "plyometrie", slot: true },
+        { name: "Trizeps",  kategorie: "trizeps", vorgabe: "3 × 2 Sätze" },
+        { name: "Exit",     kategorie: "exit" },
       ]},
     ],
   },
@@ -37,16 +45,17 @@ export const TAGE = [
     id: "B", name: "Tag B", untertitel: "Pull + Beine", farbe: "#2a6079",
     bloecke: [
       { name: "Block 1", bereiche: [
-        { name: "Beine",    kategorie: "beine" },
-        { name: "Core 1",   kategorie: "core", slot: true },
+        { name: "Warm-Up",  kategorie: "warmup" },
+        { name: "Beine",    kategorie: "beine",      vorgabe: "2 × 4 Sätze" },
+        { name: "Jump",     kategorie: "plyometrie", vorgabe: "5 Sätze" },
       ]},
       { name: "Block 2", bereiche: [
-        { name: "Rücken",   kategorie: "ruecken" },
-        { name: "Core 2",   kategorie: "core", slot: true },
+        { name: "Rücken",   kategorie: "ruecken", vorgabe: "2 × 3 Sätze" },
+        { name: "Core",     kategorie: "core" },
       ]},
       { name: "Block 3", bereiche: [
-        { name: "Bizeps",   kategorie: "bizeps" },
-        { name: "Core 3",   kategorie: "core", slot: true },
+        { name: "Bizeps",   kategorie: "bizeps", vorgabe: "1 × 3 Sätze" },
+        { name: "Exit",     kategorie: "exit" },
       ]},
     ],
   },

@@ -65,7 +65,7 @@ melde(vergessen.length === 0,
   vergessen.length ? `nicht vorgemerkt: ${vergessen.join(", ")}` : "keine Datei vergessen");
 
 // Die Seiten müssen Manifest und Symbol verlinken.
-for (const seite of ["index.html", "verwaltung.html", "training.html"]) {
+for (const seite of ["index.html", "verwaltung.html", "training.html", "verlauf.html"]) {
   const html = lies(seite);
   melde(html.includes('rel="manifest"'), `${seite} verlinkt das Manifest`);
   melde(/name="theme-color"/.test(html), `${seite} setzt theme-color`);

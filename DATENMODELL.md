@@ -22,7 +22,7 @@ alle Videos mitladen müsste. Die Übung merkt sich nur eine `medienId`.
 |---|---|---|
 | `id` | String | Slug aus dem Namen, z. B. `bankdruecken-kurzhantel` |
 | `name`, `nameAlt[]` | String | Anzeigename und Synonyme (beides durchsuchbar) |
-| `kategorie` | String | Eine der acht aus `stammdaten.js` |
+| `kategorie` | String | Eine der neun aus `stammdaten.js` |
 | `tag` | `"A"` \| `"B"` | Wird aus der Kategorie abgeleitet, nicht von Hand gesetzt |
 | `level` | String | `einstieg` \| `mittel` \| `fortgeschritten` |
 | `messtyp` | String | Bestimmt, welche Felder beim Protokollieren erscheinen |
@@ -88,12 +88,20 @@ Schlüssel/Wert-Paare. Die Trainingsansicht legt hier drei Sorten ab:
 | Schlüssel | Wert |
 |---|---|
 | `laufendesTraining` | `{ tag, startMs }` — die gestoppte Einheit, oder `null` |
-| `auswahl-A`, `auswahl-B` | `{ "Jump 1": ["box-jumps"], … }` — was heute drankommt |
-| `werte-A`, `werte-B` | `{ "Brust::cable": { saetze, wiederholungen, gewichtKg, dauerSek, notiz }, … }` |
+| `auswahl-A`, `auswahl-B` | `{ "Jump": ["box-jumps"], … }` — was heute drankommt |
+| `werte-A`, `werte-B` | `{ "Brust::cable": { saetze: [ { wiederholungen, gewichtKg, dauerSek }, … ], notiz }, … }` |
+
+`saetze` ist ein Array mit einer Zeile je Satz — der dritte Satz darf andere
+Zahlen tragen als der erste. Ältere Bestände hielten dort eine Zahl und daneben
+`wiederholungen`, `gewichtKg` und `dauerSek` für alle Sätze gemeinsam; die
+Trainingsansicht fächert das beim Laden auf, geschrieben wird nur noch die
+neue Form.
 
 Geschlüsselt wird nach `Bereich::uebungId`, nicht nach `uebungId` allein:
-Dieselbe Plyometrie-Übung kann in Jump 1 und Jump 3 stehen und dort mit
-unterschiedlichen Werten gefahren werden.
+Der Schlüssel stammt aus der Zeit mit drei nummerierten Nebenslots je Tag, in
+denen dieselbe Übung mit unterschiedlichen Werten stehen konnte. Er bleibt, weil
+er die Werte an den Bereich bindet und eine spätere Rückkehr zu mehreren Slots
+offen hält.
 
 `laufendesTraining` bleibt bei der Sicherung außen vor, Auswahl und Werte
 wandern mit.
@@ -101,12 +109,12 @@ wandern mit.
 ## `protokoll`
 
 Ein Eintrag pro Trainingseinheit mit einem Array absolvierter Sätze. Beim
-Beenden werden die erfassten Werte aufgefächert: `saetze: 4` erzeugt vier
-Einträge mit `satzNr` 1–4 und jeweils denselben Wiederholungen und Gewichten.
-Ohne eingetragene Satzzahl bleibt es bei einem Satz je gewählter Übung. Die
-freien Notizen der einzelnen Übungen werden an `notiz` des Eintrags angehängt —
-das Satzobjekt hat kein Textfeld, und `protokoll.eintragen()` würde eines
-verwerfen.
+Beenden wandert jede erfasste Zeile der Trainingsansicht als eigener Satz
+hinein, mit `satzNr` in der angezeigten Reihenfolge. Zeilen ohne jede Zahl
+fallen weg; eine gewählte Übung, in der gar nichts steht, bleibt mit einem
+leeren Satz erhalten, damit sichtbar ist, dass sie drankam. Die freien Notizen
+der einzelnen Übungen werden an `notiz` des Eintrags angehängt — das Satzobjekt
+hat kein Textfeld, und `protokoll.eintragen()` würde eines verwerfen.
 `protokoll.verlauf(uebungId)` liefert alle Sätze einer Übung chronologisch —
 das ist die Datengrundlage für spätere Verlaufsgrafiken.
 
@@ -118,7 +126,12 @@ stehen, damit auch alte Installationen sauber durchmigrieren.
 
 ## Sicherung
 
-`exportieren()` schreibt Übungen, Workouts und Protokoll als JSON.
+`exportieren()` schreibt Übungen, Workouts und Protokoll als JSON — das ist das
+Format zum Zurückspielen. Daneben liefert `protokollCsv()` das Protokoll als
+CSV mit einer Zeile je Satz: Semikolon als Trenner, Komma als Dezimalzeichen
+und ein BOM voran, damit Excel und LibreOffice in deutscher Einstellung die
+Datei ohne Nachfrage und mit richtigen Umlauten öffnen. Zurücklesen lässt sich
+die CSV nicht.
 **Videos sind bewusst nicht enthalten** — base64-kodiert wären sie ein Drittel
 größer und würden jede Datei sprengen. Die Originalclips gehören auf einen
 zweiten Datenträger.

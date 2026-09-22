@@ -17,6 +17,8 @@ danach nur noch für Aktualisierungen gebraucht.
 
 ```
 index.html
+training.html
+verlauf.html
 verwaltung.html
 manifest.webmanifest
 sw.js
@@ -24,6 +26,9 @@ sw.js
 src/          (alle .js-Dateien)
 icons/        (alle .png-Dateien)
 ```
+
+Genau diese Liste stellt `node werkzeuge/paket-bauen.js` im Ordner
+`veroeffentlichen/` zusammen — von Hand zusammensuchen muss man sie nicht.
 
 **Nicht** nötig: `server.js`, `Fitness starten.bat`, `werkzeuge/`, `demo/`,
 `data/`, `.claude/`. Die stören nicht, gehören aber nicht zur App.

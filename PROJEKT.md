@@ -1,6 +1,6 @@
 # Fitness-App — Projektübersicht
 
-Alles Wesentliche aus der Entwicklung an einer Stelle. Stand: Service-Worker-Version `v11`.
+Alles Wesentliche aus der Entwicklung an einer Stelle. Stand: Service-Worker-Version `v15`.
 
 - **App:** https://lemaproyal.github.io/fitness-app/
 - **Code bei GitHub:** https://github.com/lemaproyal/fitness-app
@@ -28,25 +28,45 @@ Abfangen beim Stolpern.
 
 ## 2. Der Trainingsplan
 
-**2er-Split.** Acht Elemente gleichmäßig auf zwei Tage verteilt.
+**2er-Split.** Beide Tage sind gleich gebaut: Warm-Up und die schwerste
+Kraftübung in Block 1, danach je ein Nebenbereich pro Block, Exit zum Schluss.
 
 | | Tag A — Push + Explosiv | Tag B — Pull + Beine |
 |---|---|---|
-| Block 1 | Brust + Jump 1 | Beine + Core 1 |
-| Block 2 | Schulter + Jump 2 | Rücken + Core 2 |
-| Block 3 | Trizeps + Jump 3 | Bizeps + Core 3 |
+| Block 1 | Warm-Up + Brust + Jump | Warm-Up + Beine + Jump |
+| Block 2 | Schulter + Core | Rücken + Core |
+| Block 3 | Trizeps + Exit | Bizeps + Exit |
 
-Jeder Block besteht aus zwei Bereichen: einer Kraftübung und einer Sprung-
-beziehungsweise Rumpfübung. In jedem Bereich stehen alle Übungen der passenden
+Beide Tage sind eingerahmt: **Warm-Up** am Anfang, **Exit** am Ende. Hinter
+dem Bereichsnamen steht die empfohlene Satzzahl, sofern in `stammdaten.js`
+eine `vorgabe` hinterlegt ist:
+
+| Tag A | | Tag B | |
+|---|---|---|---|
+| Brust | 2 × 3 Sätze | Beine | 2 × 4 Sätze |
+| Jump | 5 Sätze | Jump | 5 Sätze |
+| Schulter | 2 × 3 Sätze | Rücken | 2 × 3 Sätze |
+| Trizeps | 3 × 2 Sätze | Bizeps | 1 × 3 Sätze |
+
+Das ist reiner Anzeigetext und steuert nichts.
+
+**Vier Kategorien stehen auf beiden Tagen:** Warm-Up, Jump (Plyometrie),
+Core und Exit. Ihr `tag` in `stammdaten.js` sagt deshalb nur noch, unter
+welchem Tag sie der Verwaltungsfilter einsortiert — für die Trainingsansicht
+ist er ohne Bedeutung. Der „anlegen"-Link aus einem leeren Bereich filtert
+darum nach Kategorie (`verwaltung.html?kategorie=warmup`) statt nach Tag.
+
+Jeder Block besteht in der Regel aus zwei Bereichen: einer Kraftübung und einer
+Sprung- beziehungsweise Rumpfübung; Block 1 von Tag A trägt zusätzlich das
+Warm-Up. In jedem Bereich stehen alle Übungen der passenden
 Kategorie zur Auswahl; per Klick stellst du dir daraus das Training des Tages
 zusammen.
 
 **Warum diese Aufteilung:** Brust, Schulter und Trizeps arbeiten beim Drücken
 zusammen — an einem Tag trainiert ermüdet man sie einmal richtig statt zweimal
-halb. Dasselbe gilt für Rücken und Bizeps beim Ziehen. Plyometrie liegt auf
-Tag A, damit sie nicht mit dem schweren Beintraining zusammenfällt; die
-Beinmuskulatur bekommt so zweimal pro Woche einen Reiz, einmal explosiv und
-einmal unter Last.
+halb. Dasselbe gilt für Rücken und Bizeps beim Ziehen. Plyometrie steht auf
+beiden Tagen: Die Beinmuskulatur bekommt so jede Einheit einen explosiven
+Reiz und auf Tag B zusätzlich einen unter Last.
 
 **Reihenfolge im Training:** Plyometrie gehört an den Anfang, solange das
 Nervensystem frisch ist. Core ans Ende — ein vorermüdeter Rumpf macht
@@ -80,6 +100,7 @@ Bei Vorbelastungen an Knie, Hüfte oder Achillessehne vorher ärztlich abklären
 |---|---|
 | `index.html` | Startseite: zwei Kacheln Tag A / Tag B, darunter Einstellungen |
 | `training.html` | Training eines Tages: Blöcke, Auswahl, Werte, Videos, Stoppuhr |
+| `verlauf.html` | Alle absolvierten Trainings, Export als CSV und JSON |
 | `verwaltung.html` | Übungen anlegen und bearbeiten, Export/Import |
 
 ### Module in `src/`
@@ -89,6 +110,7 @@ Bei Vorbelastungen an Knie, Hüfte oder Achillessehne vorher ärztlich abklären
 | `db.js` | Datenbankschicht (IndexedDB), Export/Import |
 | `stammdaten.js` | Kategorien, Trainingstage, Blöcke, Seed-Übungen |
 | `training.js` | Trainingsansicht: Blöcke, Auswahl, Uhr |
+| `verlauf.js` | Verlauf der Trainings, Export |
 | `verwaltung.js` | Übungsverwaltung |
 | `start.js` | Startseite |
 | `video.js` | Videodateien, Links, Abspielschleife |
@@ -128,39 +150,85 @@ Verweis auf das Medium.
 `url` (Direktlink) und `youtube` (Einbettung). `loopStartMs` und `loopEndeMs`
 schneiden die angezeigte Sequenz, **ohne die Datei anzufassen**.
 
-**Block-Zuordnung:** Eine Jump- oder Core-Übung mit `block: 2` erscheint nur in
-Jump 2 beziehungsweise Core 2. Ohne Zuordnung steht sie in allen drei Slots.
+**Block-Zuordnung:** Das Feld `block` einer Jump- oder Core-Übung stammt aus
+der Zeit mit drei nummerierten Nebenslots je Tag. Seit jede Kategorie nur noch
+einen Bereich hat, wirkt es nirgends mehr — die Verwaltung bietet es weiter an,
+die Trainingsansicht wertet es nicht mehr aus.
 
 ---
 
 ## 5. Werte erfassen
 
-Klappt man eine Übung auf, stehen **über dem Video** vier Felder: `Sätze`,
-`WDH`, `Gewicht` (kg) und `Dauer` (s), darunter ein freies **Notizfeld**. Was
-leer bleibt, bleibt leer — die Standardvorgaben der Übung stehen nur als grauer
-Platzhalter in den Zahlenfeldern.
+Klappt man eine Übung auf, steht **über dem Video** eine Tabelle: **je Satz eine
+Zeile** mit `WDH`, `Gewicht` (kg) und `Dauer` (s). Darunter `+ Satz` für eine
+weitere Zeile und je Zeile ein `✕` zum Entfernen; die letzte Zeile bleibt immer
+stehen. Ganz unten ein freies **Notizfeld**.
+
+```
+      WDH   GEWICHT   DAUER
+ 1     12     22,5             ✕
+ 2     12     22,5             ✕
+ 3     10       25             ✕
+ 4      8       25             ✕
+            + Satz
+```
+
+Eine eigene Zeile je Satz, weil sich Sätze unterscheiden: Der dritte fällt ab,
+beim vierten geht das Gewicht runter. Ein gemeinsamer Wert für alle Sätze konnte
+das nicht festhalten.
+
+Wie viele Zeilen zu Beginn dastehen, sagt die Satzvorgabe der Übung. `+ Satz`
+übernimmt die Zahlen der vorherigen Zeile — von Satz zu Satz ändert sich meist
+nur eine, und die tippt sich schneller als drei. Was leer bleibt, bleibt leer;
+die Standardvorgaben stehen nur als grauer Platzhalter in den Feldern.
 
 Die Notiz gilt dem heutigen Training („Sitz auf 4", „rechts zieht"), nicht der
 Übung an sich. Dauerhafte Anmerkungen gehören weiterhin in die Verwaltung —
 die stehen unten im aufgeklappten Kasten im grauen Feld.
 
-In der zugeklappten Zeile steht danach die Kurzfassung des selbst Eingetragenen
-(`4 × 12 · 22,5 kg`), nicht mehr die Vorgabe aus der Verwaltung.
+In der zugeklappten Zeile steht die Kurzfassung des selbst Eingetragenen. Gleich
+bleibende Zahlen stehen einmal da, wechselnde als Spanne vom ersten zum letzten
+Satz: `4 × 12–8 · 22,5–25 kg`.
 
 Die Werte gehören zum Trainingstag, nicht zur Einheit: Sie liegen unter dem
 Schlüssel `werte-A` beziehungsweise `werte-B` in `einstellungen` und stehen beim
 nächsten Öffnen wieder da. So sieht man beim Antreten sofort, womit man zuletzt
 gearbeitet hat, und ändert nur, was sich ändert.
 
-Beim **Stopp** wandern sie ins `protokoll` — ein Eintrag je Satz, also aus
-`4 × 12 · 22,5 kg` vier Sätze mit je 12 Wiederholungen und 22,5 kg. Genau diese
-Form erwartet `protokoll.verlauf(uebungId)` für spätere Verlaufsgrafiken. Die
-Notizen hängen sich an die Notiz der Einheit („1 Übung — Cable: Sitz auf 4"),
-sonst wären sie beim nächsten Training überschrieben und für immer weg.
+Ältere Bestände, in denen eine Zeile für alle Sätze galt, werden beim Laden
+aufgefächert — aus `3 Sätze · 10 WDH · 20 kg` werden drei gleiche Zeilen.
+
+Beim **Stopp** wandert die Einheit ins `protokoll` — ein Eintrag je erfasstem
+Satz, mit genau den Zahlen, die in der Tabelle stehen. Leere Zeilen fallen weg;
+eine Übung ganz ohne Zahlen bleibt mit einem leeren Satz stehen, damit sichtbar
+ist, dass sie drankam. Genau diese Form erwartet `protokoll.verlauf(uebungId)`
+für spätere Verlaufsgrafiken. Die Notizen hängen sich an die Notiz der Einheit
+(„1 Übung — Cable: Sitz auf 4"), sonst wären sie beim nächsten Training
+überschrieben und für immer weg.
 
 ---
 
-## 6. Sequenz markieren
+## 6. Verlauf und Export
+
+Jede beendete Einheit steht unter **Verlauf** (`verlauf.html`, von der
+Startseite aus erreichbar): Datum, Trainingstag, Dauer, Anzahl Übungen und
+Sätze. Aufgeklappt zeigt sie je Übung eine Tabelle mit allen Sätzen und die
+Notiz der Einheit. Einzelne Einträge lassen sich dort löschen, filtern kann man
+nach Tag A und Tag B.
+
+Zwei Wege hinaus:
+
+- **Als CSV** — eine Zeile je Satz mit Datum, Uhrzeit, Tag, Trainingsdauer,
+  Übung, Satznummer, WDH, Gewicht und Dauer. Semikolon als Trenner, Komma als
+  Dezimalzeichen und ein BOM voran, damit Excel und LibreOffice die Datei ohne
+  Nachfrage und mit richtigen Umlauten öffnen. Zum Auswerten gedacht, nicht zum
+  Zurückspielen.
+- **Vollständige Sicherung** — dieselbe JSON-Datei wie unter Einstellungen. Sie
+  enthält das Protokoll mit und ist die einzige, die sich wieder einlesen lässt.
+
+---
+
+## 7. Sequenz markieren
 
 Video läuft, du drückst **Start** wenn die Bewegung beginnt und **Stopp** wenn
 sie endet. Danach spielt die Vorschau nur noch diesen Abschnitt in Schleife.
@@ -176,7 +244,7 @@ YouTubes IFrame-Player hinter derselben Oberfläche (`duration`, `currentTime`,
 
 ---
 
-## 7. Abläufe
+## 8. Abläufe
 
 ### Entwickeln
 
@@ -208,7 +276,8 @@ Bestände.
 Übertragen über `Einstellungen` → `⋯`:
 
 - **Exportieren** — schreibt eine JSON-Datei mit Übungen, Videolinks,
-  Blockzuordnungen, Notizen, Auswahl je Tag, Workouts und Protokoll
+  Blockzuordnungen, Notizen, Auswahl je Tag, Workouts und Protokoll. Dieselbe
+  Datei gibt es auch unter **Verlauf**, dort zusätzlich als CSV zum Auswerten
 - **Importieren** — liest sie wieder ein
 - **Kästchen „vorhandene Daten ersetzen"** — ohne Haken werden die Bestände
   zusammengeführt, mit Haken wird der hiesige gelöscht und exakt durch die
@@ -224,7 +293,7 @@ pflegen, weil dort trainiert wird.
 
 ---
 
-## 8. Wichtige Entscheidungen und warum
+## 9. Wichtige Entscheidungen und warum
 
 **PWA statt nativer App** — kein Java und kein Android SDK auf dem Rechner. Eine
 APK über Bubblewrap oder Capacitor hätte trotzdem erst HTTPS-Hosting gebraucht
@@ -251,11 +320,12 @@ so stimmt die Zeit beim Wiederöffnen trotzdem.
 
 ---
 
-## 9. Fallstricke
+## 10. Fallstricke
 
 | Symptom | Ursache | Abhilfe |
 |---|---|---|
 | Änderung kommt am Handy nicht an | `VERSION` in `sw.js` nicht hochgezählt | Nummer erhöhen, neu hochladen |
+| „Neue Fassung verfügbar" erscheint nicht | Die installierte App wird aus dem Hintergrund geholt, nicht neu geladen — dann fragt der Browser von sich aus nie nach | App aus der Übersicht wischen und neu starten. Ab `v12` sieht die App beim Zurückkommen selbst nach |
 | Upload scheint zu fehlen | `Commit changes` nicht gedrückt — der Knopf sitzt weit unter der Dateiliste | Ans Seitenende scrollen |
 | Alles landet eine Ebene zu tief | Ordner `veroeffentlichen` statt seines Inhalts gezogen | Inhalt markieren (Strg+A) und ziehen |
 | „Offline-Betrieb nicht aktiv" bleibt stehen | Seite nicht über https aufgerufen | Adresse prüfen |
@@ -267,13 +337,10 @@ Sicherung.
 
 ---
 
-## 10. Was noch offen ist
+## 11. Was noch offen ist
 
-- **Einzelne Sätze getrennt erfassen** — bisher gelten Wiederholungen und
-  Gewicht für alle Sätze einer Übung gleich (siehe Abschnitt 5). Wer im dritten
-  Satz abfällt, kann das noch nicht festhalten.
 - **Verlaufsgrafiken** — `protokoll.verlauf(uebungId)` liefert die Daten bereits
-  chronologisch.
+  chronologisch, der Verlauf zeigt sie bisher nur als Tabelle.
 - **Pausentimer** zwischen den Sätzen.
 - **Körpergewicht und Maße** mitloggen.
 - **Eigene Videos** — Datenmodell und Speicherpfad sind vorhanden, die beiden
