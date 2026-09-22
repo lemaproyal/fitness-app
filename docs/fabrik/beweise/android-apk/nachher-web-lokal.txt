@@ -1,0 +1,25 @@
+== Nachher: Web-Seite lokal (node server.js aus dem Worktree, Browser-Pane), 2026-09-22
+Service Worker und Caches vorher gelöscht. Download-Klick abgefangen (HTMLAnchorElement.click),
+Android-Brücke durch ein Objekt mit postMessage/onmessage nachgebildet.
+
+verwaltung.html, Knopf "Exportieren" (#btnExport)
+  normaler Browser        → Download "fitness-sicherung-2026-09-22.json", Meldung "Sicherung heruntergeladen."
+  APK, App meldet ok      → kein Browser-Download, Auftrag {aktion:"dateiSpeichern", id:1, typ:"application/json"},
+                            Meldung "Sicherung in „Downloads“ gespeichert (fitness-sicherung-2026-09-22 (1).json)."
+  APK, App meldet Fehler  → Meldung "Sicherung fehlgeschlagen: Download-Ordner nicht erreichbar"
+  APK, keine Antwort 15 s → Meldung "Sicherung fehlgeschlagen: die App hat nicht geantwortet" (Text seitdem ergänzt um
+                            " – bitte im Ordner Downloads nachsehen")
+  WebView ohne Brücke     → kein Download, Meldung "Sicherung fehlgeschlagen: …" statt "heruntergeladen"
+
+verlauf.html, Knopf "JSON" (#btnJson) – nach Review Runde 2
+  normaler Browser        → Download "fitness-sicherung-2026-09-22.json", Meldung "Sicherung heruntergeladen."
+  APK, App meldet ok      → kein Browser-Download, Meldung "Sicherung in „Downloads“ gespeichert (fitness-sicherung-2026-09-22.json)."
+  fremde WebView          → kein Download, Meldung "Sicherung fehlgeschlagen: in dieser Ansicht nicht möglich –
+                            in Chrome oder der aktuellen Fitness-App öffnen"
+  CSV-Knopf               → lokal keine Trainings vorhanden, daher wie bisher "Noch nichts zu exportieren."
+
+index.html, Installationshinweis (src/pwa.js installationBeobachten)
+  normaler Browser        → bereitsInstalliert=false, Hinweis "Als App ablegen …" sichtbar (unverändert)
+  mit window.FitnessAndroid → bereitsInstalliert=true (Hinweis erscheint nicht)
+
+node werkzeuge/pwa-pruefen.js → "Alles vollständig — die App ist installierbar."

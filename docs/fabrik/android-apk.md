@@ -72,6 +72,7 @@ Android SDK installiert sind.
 - Stabilität: Zwei Läufe scheiterten, weil der allererste Seitenaufruf im frisch gestarteten Emulator
   fehlschlug (Offline-Seite, obwohl Android „online“ meldete). Die App versucht es seitdem einmal still
   erneut, bevor sie die Offline-Seite zeigt; die Offline-Seite nennt den Fehlergrund.
+- [nachher-web-lokal.txt](beweise/android-apk/nachher-web-lokal.txt) – alle Export-Fälle der Web-Seite.
 - Web-Version lokal (localhost, Browser-Pane): Export im Browser weiter als Blob-Download
   (`fitness-sicherung-2026-09-22.json`), mit `window.FitnessAndroid` stattdessen über die Brücke
   (verwaltung.html und verlauf.html); Installationshinweis im Browser weiter sichtbar, in der APK
