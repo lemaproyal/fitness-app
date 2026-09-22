@@ -76,7 +76,7 @@ jobs:
           # Feste DNS-Server: Mit dem Standard konnte der Emulator direkt nach dem Start
           # gelegentlich keine Namen auflösen (ERR_NAME_NOT_RESOLVED).
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -dns-server 8.8.8.8,1.1.1.1
-          script: bash android/test/emulator-test.sh android/app/build/outputs/apk/debug/app-debug.apk test-ergebnis
+          script: bash android/test/emulator-lauf.sh android/app/build/outputs/apk/debug/app-debug.apk test-ergebnis
 
       - name: Test-Screenshots aufheben
         if: always()
@@ -115,7 +115,8 @@ jobs:
             # Ein versehentlich getauschtes Secret ergäbe eine APK, die sich nicht über die
             # installierte legen lässt – Update nur mit Deinstallation, also Datenverlust.
             erwartet=$(tr -d '[:space:]' < android/signatur-fingerabdruck.txt)
-            [[ "$erwartet" =~ ^[0-9a-f]{64}$ ]]               || { echo "::error::android/signatur-fingerabdruck.txt enthält keinen gültigen Fingerabdruck"; exit 1; }
+            [[ "$erwartet" =~ ^[0-9a-f]{64}$ ]] \
+              || { echo "::error::android/signatur-fingerabdruck.txt enthält keinen gültigen Fingerabdruck"; exit 1; }
             grep -qE "SHA-256 digest: ${erwartet}$" zertifikat.txt \
               || { echo "::error::Signaturschlüssel passt nicht zu android/signatur-fingerabdruck.txt"; exit 1; }
           fi
