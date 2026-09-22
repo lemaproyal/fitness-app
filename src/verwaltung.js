@@ -11,7 +11,7 @@ import { aufbereiten, aufbereitenLink, schleifeAbspielen,
 import { schnittleisteVerbinden } from "./schnitt.js";
 import { spielerErzeugen } from "./youtube.js";
 import { serviceWorkerAnmelden } from "./pwa.js";
-import { dateiSpeichern } from "./datei.js";
+import { dateiAusgeben } from "./datei.js";
 
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? "").replace(/[&<>"']/g, z =>
@@ -480,9 +480,9 @@ async function seedLaden() {
 
 async function exportDatei() {
   const daten = await exportieren();
-  dateiSpeichern(`fitness-sicherung-${new Date().toISOString().slice(0, 10)}.json`,
-                 JSON.stringify(daten, null, 2), "application/json");
-  melden("Sicherung heruntergeladen.");
+  melden(await dateiAusgeben("Sicherung",
+                             `fitness-sicherung-${new Date().toISOString().slice(0, 10)}.json`,
+                             JSON.stringify(daten, null, 2), "application/json"));
 }
 
 async function importDatei(datei) {

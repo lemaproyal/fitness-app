@@ -12,7 +12,7 @@
 import { protokoll, uebungen, exportieren, protokollCsv } from "./db.js";
 import { tagNach } from "./stammdaten.js";
 import { serviceWorkerAnmelden } from "./pwa.js";
-import { dateiSpeichern } from "./datei.js";
+import { dateiAusgeben } from "./datei.js";
 
 const $ = id => document.getElementById(id);
 const ZEICHEN = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -146,16 +146,14 @@ const heute = () => new Date().toISOString().slice(0, 10);
 
 async function csvExport() {
   if (!einheiten.length) return melden("Noch nichts zu exportieren.");
-  dateiSpeichern(`fitness-trainings-${heute()}.csv`, await protokollCsv(),
-                 "text/csv;charset=utf-8");
-  melden("CSV heruntergeladen.");
+  melden(await dateiAusgeben("CSV", `fitness-trainings-${heute()}.csv`, await protokollCsv(),
+                             "text/csv;charset=utf-8"));
 }
 
 async function jsonExport() {
   const daten = await exportieren();
-  dateiSpeichern(`fitness-sicherung-${heute()}.json`, JSON.stringify(daten, null, 2),
-                 "application/json");
-  melden("Sicherung heruntergeladen.");
+  melden(await dateiAusgeben("Sicherung", `fitness-sicherung-${heute()}.json`,
+                             JSON.stringify(daten, null, 2), "application/json"));
 }
 
 // ------------------------------------------------------------------ Löschen

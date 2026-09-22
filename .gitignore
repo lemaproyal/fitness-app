@@ -9,3 +9,6 @@ dist/
 *.jks
 *.keystore
 signatur/
+*.pem
+passwort.txt
+signatur-base64.txt

@@ -5,8 +5,9 @@ Die APK zeigt dieselbe App wie die Web-Version, speichert die Daten aber im
 nicht mehr. Weg sind die Daten nur, wenn die App deinstalliert wird oder in den
 Android-Einstellungen bei der App „Speicher leeren“ getippt wird.
 
-Neuer Programmcode kommt wie bisher über GitHub Pages: hochladen, fertig. Eine
-neue APK braucht es nur, wenn sich im Ordner `android/` etwas ändert.
+Den Programmcode holt die APK von GitHub Pages. Änderungen kommen also wie
+bisher durch Hochladen aufs Handy. Eine neue APK braucht es nur, wenn sich im
+Ordner `android/` etwas ändert.
 
 ## Einmalig: Signaturschlüssel bei GitHub hinterlegen
 
@@ -14,26 +15,30 @@ Jede APK wird mit einem Schlüssel unterschrieben. Android installiert ein Updat
 nur, wenn es mit **demselben** Schlüssel unterschrieben ist. Mit einem anderen
 Schlüssel ginge es nur über Deinstallieren, und dabei gehen alle Daten verloren.
 
-Der Schlüssel liegt am Rechner in `FITNESS\signatur\`. Er gehört nie ins
-Repository, das ist öffentlich.
+Der Schlüssel liegt am Rechner in `Desktop\AI Cloud\Fitness-Signatur\`, also
+bewusst **außerhalb** des Projektordners. So kann er beim Hochladen nicht aus
+Versehen im öffentlichen Repository landen. **Diesen Ordner nie zu GitHub
+hochladen.**
 
 1. github.com/lemaproyal/fitness-app → **Settings** → **Secrets and variables**
    → **Actions** → **New repository secret**
-2. Name `SIGNATUR_BASE64`, Wert: kompletter Inhalt von `signatur\signatur-base64.txt`
+2. Name `SIGNATUR_BASE64`, Wert: kompletter Inhalt von `signatur-base64.txt`
 3. Noch einmal **New repository secret**: Name `SIGNATUR_PASSWORT`, Wert: Inhalt
-   von `signatur\passwort.txt`
+   von `passwort.txt`
 
-**Den Ordner `signatur\` zusätzlich sichern**, z. B. auf Google Drive oder einem
-USB-Stick. Geht er verloren, lässt sich die App nicht mehr aktualisieren, ohne
-sie neu zu installieren.
+**Den Ordner `Fitness-Signatur` zusätzlich sichern**, z. B. auf einem USB-Stick.
+Geht er verloren, lässt sich die App nicht mehr aktualisieren, ohne sie neu zu
+installieren.
 
-## APK bauen lassen
+## Bevor die APK aufs Handy kommt
 
-Das passiert automatisch, sobald eine Änderung am Ordner `android/` auf GitHub
-ankommt. Von Hand: Repository → **Actions** → **Android-APK** → **Run workflow**.
-
-Jeder Lauf testet die App vorher im Android-Emulator. Die Screenshots liegen im
-Lauf unter **Artifacts → test-ergebnis**.
+1. Der Pull Request mit der APK ist gemergt. Dadurch sind auch die angepassten
+   Web-Dateien (`src/datei.js`, `src/pwa.js`, `sw.js`) auf GitHub Pages. Ohne
+   sie kann die APK nicht exportieren.
+2. Die Secrets sind hinterlegt (siehe oben).
+3. Unter **Actions → Android-APK** ist der Lauf auf `main` grün. Erst dann gibt
+   es das Release mit der Datei `fitness.apk`. Wurden die Secrets erst nach dem
+   Merge hinterlegt: **Run workflow** drücken.
 
 ## Am Handy installieren
 
@@ -53,3 +58,13 @@ Lauf unter **Artifacts → test-ergebnis**.
 
 Exporte landen in der APK direkt im Ordner **Downloads** des Handys. Gegen ein
 verlorenes oder kaputtes Handy hilft nur eine Kopie woanders, z. B. Google Drive.
+
+## Für Entwickler
+
+- Gebaut und geprüft wird von `.github/workflows/apk.yml`: Test-APK bauen, im
+  Android-Emulator prüfen (`android/test/emulator-test.sh`, Screenshots unter
+  **Artifacts → test-ergebnis**), dann die signierte APK bauen.
+- Der Lauf vergleicht den Schlüssel mit `android/signatur-fingerabdruck.txt`. So
+  fällt ein falsch hinterlegtes Secret auf, bevor eine unpassende APK erscheint.
+- Die Versionsnummer ist die Zahl der Commits und steigt deshalb immer. Die Historie
+  von `main` nie umschreiben (kein Force-Push), sonst könnte sie sinken.

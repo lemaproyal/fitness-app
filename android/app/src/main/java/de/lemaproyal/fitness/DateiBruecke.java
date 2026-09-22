@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.webkit.WebView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.webkit.JavaScriptReplyProxy;
@@ -22,28 +21,35 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Nimmt Dateien aus der Web-App entgegen (src/datei.js) und legt sie im
  * Download-Ordner des Handys ab. Nötig, weil die WebView die Blob-Downloads,
- * mit denen die Web-App im Browser exportiert, nicht ausführen kann.
+ * mit denen die Web-App im Browser exportiert, kommentarlos verwirft.
  *
  * In der Web-App erscheint die Brücke als `window.FitnessAndroid` – und zwar nur
  * auf der eigenen Adresse, nicht in eingebetteten Seiten wie dem YouTube-Player.
+ * Jeder Auftrag bekommt eine Antwort {id, ok, name | fehler}; die Meldung für
+ * den Nutzer zeigt die Web-App selbst.
  */
 final class DateiBruecke implements WebViewCompat.WebMessageListener {
 
     private static final String NAME_IM_BROWSER = "FitnessAndroid";
 
     private final Context context;
+    // Eine Sicherung kann mehrere Megabyte haben – Schreiben blockiert sonst die Oberfläche.
+    private final ExecutorService schreiber = Executors.newSingleThreadExecutor();
 
     private DateiBruecke(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
     }
 
     static void anmelden(WebView webView, Context context) {
         // Seit Android-WebView 2021 vorhanden, das über den Play Store aktualisiert wird.
-        // Fehlt die Funktion trotzdem, bleibt nur der Export ohne Wirkung.
+        // Fehlt die Funktion trotzdem, erkennt src/datei.js die WebView ohne Brücke und
+        // meldet, dass nicht gespeichert werden kann.
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
         WebViewCompat.addWebMessageListener(webView, NAME_IM_BROWSER,
                 Collections.singleton("https://" + MainActivity.APP_HOST), new DateiBruecke(context));
@@ -54,17 +60,39 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
                               @NonNull Uri herkunft, boolean istHauptseite,
                               @NonNull JavaScriptReplyProxy antwort) {
         if (!istHauptseite || nachricht.getData() == null) return;
+        JSONObject auftrag;
         try {
-            JSONObject auftrag = new JSONObject(nachricht.getData());
-            if (!"dateiSpeichern".equals(auftrag.optString("aktion"))) return;
-            String name = inDownloadsSpeichern(
-                    auftrag.getString("dateiname"),
-                    auftrag.getString("inhalt"),
-                    auftrag.optString("typ", "application/octet-stream"));
-            melden(context.getString(R.string.gespeichert, name));
-        } catch (JSONException | IOException | RuntimeException e) {
-            melden(context.getString(R.string.speichern_fehlgeschlagen, e.getMessage()));
+            auftrag = new JSONObject(nachricht.getData());
+        } catch (JSONException e) {
+            return; // Kein Auftrag der Web-App – nichts, worauf sie wartet.
         }
+        if (!"dateiSpeichern".equals(auftrag.optString("aktion"))) return;
+
+        schreiber.execute(() -> {
+            JSONObject ergebnis = ausfuehren(auftrag);
+            // Antworten darf nur der UI-Thread.
+            ansicht.post(() -> antwort.postMessage(ergebnis.toString()));
+        });
+    }
+
+    private JSONObject ausfuehren(JSONObject auftrag) {
+        JSONObject ergebnis = new JSONObject();
+        try {
+            ergebnis.put("id", auftrag.opt("id"));
+            try {
+                String name = inDownloadsSpeichern(
+                        auftrag.getString("dateiname"),
+                        auftrag.getString("inhalt"),
+                        auftrag.optString("typ", "application/octet-stream"));
+                ergebnis.put("ok", true).put("name", name);
+            } catch (JSONException | IOException | RuntimeException e) {
+                String grund = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                ergebnis.put("ok", false).put("fehler", grund);
+            }
+        } catch (JSONException unmoeglich) {
+            // put() scheitert nur an ungültigen Zahlen – hier gibt es keine.
+        }
+        return ergebnis;
     }
 
     /** Liefert den tatsächlichen Dateinamen – Android hängt bei Namensgleichheit „(1)“ an. */
@@ -82,7 +110,8 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
         try (OutputStream aus = speicher.openOutputStream(ziel)) {
             if (aus == null) throw new IOException("Datei lässt sich nicht öffnen");
             aus.write(inhalt.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // Sonst bliebe ein halb angelegter, unsichtbarer Eintrag im Download-Ordner liegen.
             speicher.delete(ziel, null, null);
             throw e;
         }
@@ -98,9 +127,5 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
                 null, null, null)) {
             return c != null && c.moveToFirst() ? c.getString(0) : vorgabe;
         }
-    }
-
-    private void melden(String text) {
-        Toast.makeText(context, text, Toast.LENGTH_LONG).show();
     }
 }

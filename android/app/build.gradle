@@ -2,9 +2,19 @@ plugins {
     id "com.android.application"
 }
 
-// Jeder Build auf GitHub bekommt eine höhere Nummer. Android installiert ein
-// Update nur, wenn die Nummer größer ist als die der installierten Fassung.
-def buildNummer = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+// Versionsnummer = Zahl der Commits. Android installiert ein Update nur, wenn die
+// Nummer größer ist als die der installierten Fassung – sonst bliebe nur
+// Deinstallieren, und das löscht alle Trainingsdaten. Die Commit-Zahl wächst mit
+// jeder Änderung, unabhängig davon, wie der Workflow heißt oder wie oft er läuft.
+def gitAusgabe = { String... befehl ->
+    providers.exec { commandLine(["git"] + befehl.toList()) }.standardOutput.asText.get().trim()
+}
+if (gitAusgabe("rev-parse", "--is-shallow-repository") == "true") {
+    throw new GradleException("Die Versionsnummer braucht die ganze Git-Historie (actions/checkout mit fetch-depth: 0).")
+}
+def buildNummer = gitAusgabe("rev-list", "--count", "HEAD").toInteger()
+
+def signaturDatei = System.getenv("SIGNATUR_DATEI")
 
 android {
     namespace "de.lemaproyal.fitness"
@@ -17,6 +27,7 @@ android {
         targetSdk 35
         versionCode buildNummer
         versionName "1.0.${buildNummer}"
+        resValue "string", "app_name", "Fitness"
     }
 
     signingConfigs {
@@ -24,9 +35,8 @@ android {
             // Der Schlüssel kommt aus den GitHub-Secrets (siehe APK.md). Er muss für
             // immer derselbe bleiben: Eine APK mit anderem Schlüssel lässt sich nur nach
             // Deinstallation installieren – und die löscht alle Trainingsdaten.
-            def datei = System.getenv("SIGNATUR_DATEI")
-            if (datei) {
-                storeFile file(datei)
+            if (signaturDatei) {
+                storeFile file(signaturDatei)
                 storeType "pkcs12"
                 storePassword System.getenv("SIGNATUR_PASSWORT")
                 keyAlias "fitness"
@@ -36,13 +46,21 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Eigene App neben der echten: Die Test-APK ist mit einem wechselnden
+            // Schlüssel signiert. Hätte sie dieselbe Kennung, ließe sich die echte
+            // App danach nur nach Deinstallation (= Datenverlust) installieren.
+            applicationIdSuffix ".test"
+            resValue "string", "app_name", "Fitness (Test)"
+        }
         release {
-            signingConfig signingConfigs.release
+            signingConfig signaturDatei ? signingConfigs.release : null
         }
     }
 
     buildFeatures {
         buildConfig true
+        resValues true
     }
 
     compileOptions {

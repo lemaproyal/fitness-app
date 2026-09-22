@@ -3,6 +3,11 @@
 Ohne Play Store, ohne APK, ohne Android Studio. Der Weg führt über GitHub Pages:
 Dateien hochladen, Adresse am Handy öffnen, zum Startbildschirm hinzufügen.
 
+Besser ist inzwischen die Android-App (APK) aus `APK.md`: Sie lädt dieselbe Seite,
+hält die Daten aber im eigenen Speicher der App, wo „Browserdaten löschen“ in
+Chrome sie nicht erreicht. Das Hochladen hier bleibt trotzdem nötig, denn die
+APK holt ihren Programmcode von GitHub Pages.
+
 ## Warum überhaupt hochladen?
 
 Damit die App offline im Gym läuft, braucht sie einen Service Worker. Den lässt

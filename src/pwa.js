@@ -6,6 +6,8 @@
  * die Anmeldung — dort läuft die App dann eben ohne Offline-Fähigkeit.
  */
 
+import { inAndroidApp } from "./datei.js";
+
 export function serviceWorkerAnmelden({ beiUpdate } = {}) {
   if (!("serviceWorker" in navigator)) {
     return Promise.resolve({ moeglich: false, grund: "Browser kennt keine Service Worker." });
@@ -104,7 +106,7 @@ export function installationBeobachten({ beiVerfuegbar, beiInstalliert } = {}) {
   window.addEventListener("appinstalled", () => { einladung = null; beiInstalliert?.(); });
 
   // display-mode: standalone bedeutet, dass die App vom Startbildschirm läuft.
-  // In der Android-App (APK) ist sie ohnehin installiert – erkennbar an deren Brücke.
+  // In der Android-App (APK) ist sie ohnehin installiert.
   const standalone = matchMedia("(display-mode: standalone)").matches;
-  return { bereitsInstalliert: standalone || "FitnessAndroid" in window };
+  return { bereitsInstalliert: standalone || inAndroidApp() };
 }
