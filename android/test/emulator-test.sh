@@ -77,29 +77,50 @@ offline_seite() {
 app_starten() {
   symbol_antippen >> "$PROTOKOLL"
   devtools_verbinden
-  # Direkt nach dem Emulator-Start scheitert der erste Aufruf gelegentlich (belegt:
-  # ERR_NAME_NOT_RESOLVED). Dann wie ein Nutzer „Erneut versuchen“ tippen – das prüft
-  # zugleich die Offline-Seite. Jeder Versuch steht mit Grund im Protokoll.
-  local versuch offline
-  for versuch in 1 2 3; do
-    sleep 3
+  startseite_abwarten
+}
+
+# Wartet bis zu 2 Minuten auf die Startseite der App. Direkt nach dem Emulator-Start
+# scheitert der erste Aufruf gelegentlich (belegt: ERR_NAME_NOT_RESOLVED) – erscheint
+# die Offline-Seite, tippt der Test wie ein Nutzer „Erneut versuchen“ (höchstens
+# dreimal, jeder Versuch mit Grund im Protokoll). Schritt 12 erzwingt diesen Weg.
+# TIPPS zählt die Tipps auf „Erneut versuchen“ – Schritt 12 prüft, dass es welche gab.
+startseite_abwarten() {
+  local offline
+  TIPPS=0
+  for _ in $(seq 1 60); do
+    if [ "$(js "return location.pathname.endsWith('/') && document.readyState" 2>/dev/null || true)" = '"complete"' ]; then
+      return 0
+    fi
     offline=$(offline_seite)
-    [ -z "$offline" ] && break
-    notiz "Offline-Seite beim Start ($versuch. Mal): $offline"
-    tippen_auf "(text|content-desc)" "Erneut versuchen"
+    if [ -n "$offline" ] && [ "$TIPPS" -lt 3 ]; then
+      TIPPS=$((TIPPS + 1))
+      notiz "Offline-Seite ($TIPPS. Mal): $offline – tippe „Erneut versuchen“"
+      tippen_auf "(text|content-desc)" "Erneut versuchen"
+    fi
+    sleep 2
   done
-  seite_abwarten ""
+  notiz "Offene Seiten der App: $(curl -s http://localhost:9222/json | grep -o '"url": *"[^"]*"' | tr '\n' ' ')"
+  fehler "Startseite lädt nicht"
 }
 
 # Tippt auf das Element mit diesem Merkmal, z. B. tippen_auf resource-id android:id/button1
-# (OK im Dialog) oder tippen_auf "(text|content-desc)" "Erneut versuchen".
+# (OK im Dialog) oder tippen_auf "(text|content-desc)" "Erneut versuchen". Beide Argumente
+# sind Teil eines grep -E-Musters – Sonderzeichen wie . ( + im Wert wären zu maskieren.
 tippen_auf() {
-  # Nicht nach /sdcard – dort tauchte die Datei in der Dateiauswahl auf.
-  adb shell uiautomator dump /data/local/tmp/ansicht.xml > /dev/null
-  local grenzen
-  grenzen=$(adb shell cat /data/local/tmp/ansicht.xml | tr -d '\r' \
-    | grep -oE "$1=\"$2\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" \
-    | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | head -1 || true)
+  local grenzen="" versuch
+  # Die WebView baut ihren Bedienungshilfen-Baum erst beim ersten Abbild auf – daher
+  # bis zu dreimal nachsehen.
+  for versuch in 1 2 3; do
+    # Nicht nach /sdcard – dort tauchte die Datei in der Dateiauswahl auf.
+    adb shell uiautomator dump /data/local/tmp/ansicht.xml > /dev/null \
+      || fehler "uiautomator-Abbild gescheitert"
+    grenzen=$(adb shell cat /data/local/tmp/ansicht.xml | tr -d '\r' \
+      | grep -oE "$1=\"$2\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" \
+      | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' | head -1 || true)
+    [ -n "$grenzen" ] && break
+    sleep 1
+  done
   [ -n "$grenzen" ] || fehler "Element $1=$2 nicht gefunden"
   read -r x1 y1 x2 y2 <<< "$(echo "$grenzen" | tr -c '0-9' ' ')"
   adb shell input tap $(( (x1 + x2) / 2 )) $(( (y1 + y2) / 2 ))
@@ -114,18 +135,23 @@ uebersprungen() {
   notiz "übersprungen: $1 – Live-Seite noch ohne neuen Web-Code"
 }
 
-schritt "0. Warten, bis der Emulator Internet hat"
 # Ein frisch gestarteter Emulator ist manchmal noch offline. Scheitert danach noch
-# die Namensauflösung, fängt app_starten das über die Offline-Seite der App ab.
-for versuch in $(seq 1 60); do
-  # VALIDATED setzt Android erst, wenn seine eigene Prüfung ins Internet geklappt hat.
-  if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED"; then
-    notiz "online nach $versuch Versuch(en)"
-    break
-  fi
-  [ "$versuch" = 60 ] && fehler "Emulator bekommt kein Internet"
-  sleep 2
-done
+# die Namensauflösung, fängt startseite_abwarten das über die Offline-Seite ab.
+internet_abwarten() {
+  local versuch
+  for versuch in $(seq 1 60); do
+    # VALIDATED setzt Android erst, wenn seine eigene Prüfung ins Internet geklappt hat.
+    if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED"; then
+      notiz "online nach $versuch Versuch(en)"
+      return 0
+    fi
+    sleep 2
+  done
+  fehler "Emulator bekommt kein Internet"
+}
+
+schritt "0. Warten, bis der Emulator Internet hat"
+internet_abwarten
 
 schritt "1. APK installieren und starten"
 adb install -r "$APK" | tee -a "$PROTOKOLL"
@@ -228,5 +254,41 @@ erwarte "Markierung nach dem Löschen der Chrome-Daten noch da" \
          return (await db.uebungen.nachId('$MARKER_ID'))?.name ?? null")" "\"$MARKER_NAME\""
 bild "6-nach-chrome-loeschen"
 notiz "(Die Startseite zählt die Markierung nicht mit – sie hat keinen Trainingstag. Beweis ist die Zeile darüber.)"
+
+schritt "11. Absturz der Darstellung: App baut sich neu auf, statt sich zu schließen"
+pid_vorher=$(adb shell pidof "$PAKET" | tr -d '\r' || true)
+js "@darstellung-abstuerzen" > /dev/null || fehler "Absturz ließ sich nicht auslösen"
+sleep 5
+erwarte "App-Prozess läuft weiter" "$(adb shell pidof "$PAKET" | tr -d '\r' || true)" "$pid_vorher"
+devtools_verbinden
+startseite_abwarten
+erwarte "Daten nach dem Neuaufbau noch da" \
+  "$(js "const db = await import(new URL('src/db.js', location.href).href);
+         return (await db.uebungen.nachId('$MARKER_ID'))?.name ?? null")" "\"$MARKER_NAME\""
+bild "7-nach-absturz"
+
+schritt "12. Allererster Start ohne Internet: Offline-Seite, dann „Erneut versuchen“"
+# App-Daten leeren, damit auch der Service Worker weg ist – wie bei einer Neuinstallation.
+adb shell cmd connectivity airplane-mode enable
+sleep 3
+adb shell pm clear "$PAKET" > /dev/null
+symbol_antippen >> "$PROTOKOLL"
+devtools_verbinden
+offline=""
+for _ in $(seq 1 30); do
+  offline=$(offline_seite)
+  [ -n "$offline" ] && break
+  sleep 2
+done
+[ -n "$offline" ] || fehler "Offline-Seite erscheint nicht"
+notiz "OK: Offline-Seite: $offline"
+echo "$offline" | grep -q "grund=net" || fehler "Offline-Seite nennt keinen Grund"
+bild "8-offline"
+adb shell cmd connectivity airplane-mode disable
+internet_abwarten
+startseite_abwarten
+[ "$TIPPS" -ge 1 ] || fehler "„Erneut versuchen“ wurde nicht gebraucht – Offline-Weg nicht geprüft"
+notiz "OK: nach $TIPPS Tipp(s) auf „Erneut versuchen“ lädt die App"
+bild "9-nach-erneut-versuchen"
 
 schritt "ALLE PRÜFUNGEN BESTANDEN"

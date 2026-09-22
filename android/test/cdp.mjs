@@ -57,6 +57,15 @@ if (iframeHerkunft) {
   }
 }
 
+// Sonderbefehl für den Test: lässt die Darstellung der Seite abstürzen. Eine Antwort
+// kommt dann nicht mehr – die Verbindung reißt ab.
+if (code === "@darstellung-abstuerzen") {
+  ws.send(JSON.stringify({ id: naechsteId++, method: "Page.crash" }));
+  await new Promise(fertig => setTimeout(fertig, 1000));
+  console.log(JSON.stringify("abgestürzt"));
+  process.exit(0);
+}
+
 const antwort = await senden("Runtime.evaluate", {
   expression: `(async () => { ${code} })()`,
   awaitPromise: true,

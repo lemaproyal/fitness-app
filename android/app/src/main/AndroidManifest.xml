@@ -13,7 +13,9 @@
              (Exportieren) ersetzt das nicht. -->
 
         <!-- singleTask: Nach „Darüber installieren“ und „Öffnen“ legt ein späterer Tipp aufs
-             Symbol sonst ein zweites Fenster über das erste.
+             Symbol sonst ein zweites Fenster über das erste. Nebenwirkung, gewollt: Ein Tipp
+             aufs Symbol schließt, was über der App offen ist (z. B. die Dateiauswahl – die
+             Seite erfährt dann „abgebrochen“).
              configChanges: Drehen, Tastatur, Dunkelmodus, Schriftgröße oder Sprache sollen
              die Seite nicht neu laden – ein offener Dialog ginge sonst verloren. -->
         <activity

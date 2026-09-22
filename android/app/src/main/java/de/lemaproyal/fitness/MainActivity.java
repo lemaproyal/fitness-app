@@ -8,6 +8,7 @@ import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -46,6 +47,10 @@ public class MainActivity extends Activity {
     private static final String OFFLINE_SEITE = "file:///android_asset/offline.html";
     private static final int ANFRAGE_DATEIAUSWAHL = 1;
     private static final long NEUER_VERSUCH_NACH_MS = 1500;
+    private static final long MIN_ABSTAND_NEUAUFBAU_MS = 10_000;
+
+    // Statisch, weil recreate() eine neue Activity erzeugt – der Zeitpunkt muss sie überdauern.
+    private static long letzterNeuaufbau = -MIN_ABSTAND_NEUAUFBAU_MS;
 
     private WebView webView;
     private ValueCallback<Uri[]> dateiRueckruf;
@@ -53,6 +58,7 @@ public class MainActivity extends Activity {
     private WebChromeClient.CustomViewCallback vollbildRueckruf;
     private boolean ladenWiederholt;
     private boolean darstellungAbgestuerzt;
+    private boolean imVordergrund;
     private final Runnable neuLaden = () -> webView.reload();
 
     @Override
@@ -73,9 +79,7 @@ public class MainActivity extends Activity {
         DateiBruecke.anmelden(webView, this);
         setContentView(webView);
 
-        boolean wiederhergestellt = zustand != null && webView.restoreState(zustand) != null;
-        // Eine wiederhergestellte Offline-Seite wäre veraltet – inzwischen gibt es vielleicht Netz.
-        if (!wiederhergestellt || aufOfflineSeite()) {
+        if (zustand == null || webView.restoreState(zustand) == null) {
             webView.loadUrl(START_URL);
         }
     }
@@ -85,13 +89,19 @@ public class MainActivity extends Activity {
     // (visibilitychange in src/training.js). Außerdem verstummt so ein laufendes Video.
     @Override
     protected void onPause() {
-        webView.onPause();
+        imVordergrund = false;
+        if (!darstellungAbgestuerzt) webView.onPause();
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (darstellungAbgestuerzt) {
+            neuAufbauen(); // der Absturz geschah, während die App im Hintergrund war
+            return;
+        }
+        imVordergrund = true;
         webView.onResume();
     }
 
@@ -106,7 +116,23 @@ public class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle zustand) {
         super.onSaveInstanceState(zustand);
-        if (!darstellungAbgestuerzt) webView.saveState(zustand);
+        // Eine gesicherte Offline-Seite wäre beim Wiederherstellen veraltet – dann lieber
+        // frisch mit der App beginnen (und sie steht auch nicht im Zurück-Verlauf).
+        if (!darstellungAbgestuerzt && !aufOfflineSeite()) webView.saveState(zustand);
+    }
+
+    /**
+     * Baut die App nach einem Absturz der Darstellung neu auf. Stürzt sie gleich wieder
+     * ab, schließt sich die App, statt endlos neu zu starten.
+     */
+    private void neuAufbauen() {
+        long jetzt = SystemClock.elapsedRealtime();
+        if (jetzt - letzterNeuaufbau < MIN_ABSTAND_NEUAUFBAU_MS) {
+            finish();
+            return;
+        }
+        letzterNeuaufbau = jetzt;
+        recreate();
     }
 
     private boolean aufOfflineSeite() {
@@ -205,9 +231,11 @@ public class MainActivity extends Activity {
         public boolean onRenderProcessGone(WebView ansicht, RenderProcessGoneDetail details) {
             // Der Teil der WebView, der die Seite darstellt, ist abgestürzt oder wurde bei
             // Speichermangel beendet. Ohne diese Methode beendet Android die ganze App –
-            // so baut sie sich neu auf. Die Daten liegen sicher in IndexedDB.
+            // so baut sie sich neu auf. Bereits gespeicherte Daten liegen sicher in IndexedDB.
+            // Im Hintergrund erst beim Zurückkommen (onResume): Sonst startete die
+            // Darstellung dort sofort neu und könnte gleich wieder beendet werden.
             darstellungAbgestuerzt = true;
-            recreate();
+            if (imVordergrund) neuAufbauen();
             return true;
         }
 

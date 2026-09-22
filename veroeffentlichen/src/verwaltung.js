@@ -465,6 +465,7 @@ async function werkzeugeOeffnen() {
   // Browser-Erlaubnis dort ist bedeutungslos, ihr Rat („zum Startbildschirm
   // hinzufügen“) führte zurück in den Speicher von Chrome.
   $("btnPersistent").hidden = inAndroidApp();
+  $("persistentHilfe").hidden = inAndroidApp();
   $("btnPersistent").disabled = info.dauerhaft;
   $("dlgMehr").showModal();
 }

@@ -172,3 +172,18 @@ Nach Runde 3: Die DNS-Prüfung per `ping` (Vorschlag aus Runde 3) ließ den Lauf
 `ping` liefert im Emulator nicht die erwartete Ausgabe; damit war auch die vorige Negativ-Prüfung
 wirkungslos (wie der Prüfer vermutet hatte). Ersetzt durch den Nutzerweg über die Offline-Seite (s. Beweise).
 
+### Runde 4 – Score 3/5 (Android-App 4, Workflow/Tests 3, Web/Doku 4)
+Behoben:
+- Test: Neuversuch über die Offline-Seite hatte eine Zeitlücke (nur einmal nach 3 s geprüft) und
+  war nie ausgelöst, also unbewiesen. Jetzt eine Warteschleife (2 min), die bei Offline-Seite
+  tippt; `tippen_auf` liest das Abbild bis zu dreimal und meldet Fehler mit Fehlerzeile. Neuer
+  Schritt 12 erzwingt den Weg: Flugmodus an, App-Daten leeren, starten → Offline-Seite mit Grund,
+  Flugmodus aus → „Erneut versuchen“ → App lädt (mindestens ein Tipp nötig).
+- App: Neuaufbau nach Absturz der Darstellung nur im Vordergrund (sonst beim Zurückkommen) und
+  höchstens einmal in 10 s (danach schließt die App, statt endlos neu zu starten). Neuer Schritt 11
+  löst den Absturz per DevTools (`Page.crash`) aus und prüft: Prozess läuft weiter, Startseite
+  lädt, Daten da. Offline-Seite wird nicht mehr gesichert (kein veralteter Eintrag im Verlauf).
+  Kommentare zu singleTask (Nebenwirkung) und zum Datenstand beim Absturz präzisiert.
+- Web: Hilfetext „Ohne diese Erlaubnis darf der Browser …“ in der APK mit ausgeblendet (lokal:
+  Browser zeigt Knopf + Text, APK keins von beiden).
+

@@ -27,3 +27,4 @@ node werkzeuge/pwa-pruefen.js → "Alles vollständig — die App ist installier
 verwaltung.html, Menü ⋯ – Speicherhinweis (nach Review Runde 3)
   normaler Browser        → "Dauerhafte Speicherung ist nicht aktiv.", Knopf "Dauerhaft speichern anfordern" sichtbar (unverändert)
   mit window.FitnessAndroid → "Die Daten liegen im eigenen Speicher der App.", Knopf ausgeblendet
+  Hilfetext "Ohne diese Erlaubnis …" (#persistentHilfe): Browser display=block, APK display=none (nach Review Runde 4)
