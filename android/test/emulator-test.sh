@@ -98,11 +98,15 @@ uebersprungen() {
 }
 
 schritt "0. Warten, bis der Emulator Internet hat"
-# Ein frisch gestarteter Emulator ist manchmal noch offline – die App zeigte dann
-# zu Recht ihre Offline-Seite, der Test wäre aber vom Zufall abhängig.
+# Ein frisch gestarteter Emulator ist manchmal noch offline oder kann keine Namen
+# auflösen – die App zeigte dann zu Recht ihre Offline-Seite, der Test wäre aber
+# vom Zufall abhängig.
 for versuch in $(seq 1 60); do
   # VALIDATED setzt Android erst, wenn seine eigene Prüfung ins Internet geklappt hat.
-  if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED"; then
+  # ping löst den Namen zuerst auf; ob die Antwort durchkommt, ist egal (ICMP ist im
+  # Emulator oft gesperrt) – nur „unknown host“ heißt: DNS noch nicht bereit.
+  if adb shell dumpsys connectivity | grep -qE "Capabilities: [A-Z_&]*VALIDATED" \
+     && ! adb shell ping -c 1 -W 1 lemaproyal.github.io 2>&1 | grep -qi "unknown host"; then
     notiz "online nach $versuch Versuch(en)"
     break
   fi

@@ -73,6 +73,9 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
+          # Feste DNS-Server: Mit dem Standard konnte der Emulator direkt nach dem Start
+          # gelegentlich keine Namen auflösen (ERR_NAME_NOT_RESOLVED).
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -dns-server 8.8.8.8,1.1.1.1
           script: bash android/test/emulator-test.sh android/app/build/outputs/apk/debug/app-debug.apk test-ergebnis
 
       - name: Test-Screenshots aufheben
