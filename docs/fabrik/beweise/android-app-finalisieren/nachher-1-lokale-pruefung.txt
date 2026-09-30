@@ -8,3 +8,10 @@ Ausgeführt im Android-Worktree:
 - Lokale Android-Kompilierung nicht möglich: Java/JDK und Android SDK sind hier nicht installiert. Der bestehende Actions-Workflow baut und testet im Emulator; frischer Branch-Lauf folgt.
 
 Der neue Emulator-Schritt soll den aktuellen Branch-Web-Code über localhost in der Debug-WebView laden, den echten Export-Knopf betätigen, die JSON-Sicherung prüfen und zur veröffentlichten App zurückkehren. Die Produktionskonfiguration enthält nach Codeprüfung weder die Debug-Herkunft noch die Debug-Freigabe für HTTP; ein APK-/Manifest-Beleg fehlt bis zum CI-Lauf.
+
+Nach dem CI-Befund vom 2026-09-30:
+- Git Bash: bash -n android/test/emulator-test.sh und bash -n android/test/emulator-lauf.sh -> jeweils Exit 0.
+- Eine synthetische ActivityManager-Zeile mit Prozess 5295 und Google-Play-Dienste-Provider trifft den gezielten grep-Ausdruck (Exit 0).
+- git diff --check -> Exit 0.
+- node werkzeuge/pwa-pruefen.js -> „Alles vollständig — die App ist installierbar.“
+- CI-Lauf 36712856840 baute die Debug-APK; der Export und Datenerhalt wurden in zwei Versuchen im Emulator nachgewiesen. Der finale CI-Lauf für die neue Abbrucherkennung steht noch aus.

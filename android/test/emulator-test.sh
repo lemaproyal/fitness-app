@@ -26,18 +26,38 @@ YOUTUBE_HERKUNFT="https://www.youtube-nocookie.com"
 mkdir -p "$AUS"
 PROTOKOLL="$AUS/protokoll.txt"
 : > "$PROTOKOLL"
+APP_PID=""
+
+# Der Emulator aktualisiert gelegentlich Google-Play-Dienste und beendet dabei
+# die gerade laufende WebView-App. Nur diese Systemzeilen fortlaufend sichern:
+# der begrenzte Logcat-Puffer hätte sie nach zwei Minuten sonst verdrängt.
+adb logcat -v time -s ActivityManager:I > "$AUS/activity-manager.txt" 2>&1 &
+logcat_pid=$!
 
 WEBCODE_PFLICHT="${WEBCODE_PFLICHT:-false}"
 
 schritt() { echo; echo "== $*" | tee -a "$PROTOKOLL"; }
 notiz()   { echo "$*" | tee -a "$PROTOKOLL"; }
 bild()    { adb exec-out screencap -p > "$AUS/$1.png"; notiz "Screenshot: $1.png"; }
-fehler()  { notiz "FEHLER: $*"; bild "fehler" || true; exit 1; }
+fehler()  {
+  notiz "FEHLER: $*"
+  bild "fehler" || true
+  # Ein Neuversuch ist nur zulässig, wenn Android den gerade getesteten Prozess
+  # wegen des Neustarts der Google-Play-Dienste tatsächlich beendet hat.
+  if [ -n "$APP_PID" ] && [ -z "$(adb shell pidof "$PAKET" | tr -d '\r' || true)" ] \
+    && grep -E "Killing $APP_PID:de\\.lemaproyal\\.fitness\\.test/.*depends on provider com\\.google\\.android\\.gms" \
+         "$AUS/activity-manager.txt" > /dev/null; then
+    notiz "SYSTEM-ABBRUCH: Android beendete PID $APP_PID wegen Google-Play-Diensten"
+    exit 75
+  fi
+  exit 1
+}
 
 # Bei jedem Abbruch – auch durch set -e ohne fehler() – das Android-Protokoll sichern.
 logcat_sichern() {
   local code=$?
   if [ -n "${server_pid:-}" ]; then kill "$server_pid" 2>/dev/null || true; fi
+  kill "$logcat_pid" 2>/dev/null || true
   if [ "$code" -ne 0 ]; then
     adb logcat -d -b crash > "$AUS/logcat-abstuerze.txt" 2>&1 || true
     adb logcat -d -t 1500 > "$AUS/logcat.txt" 2>&1 || true
@@ -61,6 +81,7 @@ devtools_verbinden() {
     sleep 1
   done
   [ -n "$pid" ] || fehler "App-Prozess läuft nicht"
+  APP_PID="$pid"
   adb forward --remove-all
   adb forward tcp:9222 "localabstract:webview_devtools_remote_$pid" > /dev/null
 }
@@ -354,6 +375,7 @@ schritt "12. Allererster Start ohne Internet: Offline-Seite, dann „Erneut vers
 # App-Daten leeren, damit auch der Service Worker weg ist – wie bei einer Neuinstallation.
 adb shell cmd connectivity airplane-mode enable
 sleep 3
+APP_PID="" # pm clear beendet den alten Prozess absichtlich
 adb shell pm clear "$PAKET" > /dev/null
 symbol_antippen >> "$PROTOKOLL"
 devtools_verbinden
