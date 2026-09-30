@@ -12,6 +12,7 @@ Der neue Emulator-Schritt soll den aktuellen Branch-Web-Code über localhost in 
 Nach dem CI-Befund vom 2026-09-30:
 - Git Bash: bash -n android/test/emulator-test.sh und bash -n android/test/emulator-lauf.sh -> jeweils Exit 0.
 - Eine synthetische ActivityManager-Zeile mit Prozess 5295 und Google-Play-Dienste-Provider trifft den gezielten grep-Ausdruck (Exit 0).
+- Gegenprobe: Andere Abbruchursache und andere Prozessnummer treffen nicht (grep Exit 1 und 1).
 - git diff --check -> Exit 0.
 - node werkzeuge/pwa-pruefen.js -> „Alles vollständig — die App ist installierbar.“
-- CI-Lauf 36712856840 baute die Debug-APK; der Export und Datenerhalt wurden in zwei Versuchen im Emulator nachgewiesen. Der finale CI-Lauf für die neue Abbrucherkennung steht noch aus.
+- CI-Lauf 36712856840 baute die Debug-APK; der Export und Datenerhalt wurden in zwei Versuchen im Emulator nachgewiesen. Der finale CI-Lauf 36715862229 für die neue Abbrucherkennung war erfolgreich.
