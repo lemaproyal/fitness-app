@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,8 +54,12 @@ final class DateiBruecke implements WebViewCompat.WebMessageListener {
         // Fehlt die Funktion trotzdem, erkennt src/datei.js die WebView ohne Brücke und
         // meldet, dass nicht gespeichert werden kann.
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
+        Set<String> herkuenfte = new HashSet<>(Collections.singleton("https://" + MainActivity.APP_HOST));
+        // Der lokale Entwicklungsserver ist nur in der separaten Debug-App erlaubt.
+        // So kann CI den echten Export des Branch-Web-Codes in der WebView prüfen.
+        if (BuildConfig.DEBUG) herkuenfte.add("http://localhost:5173");
         WebViewCompat.addWebMessageListener(webView, NAME_IM_BROWSER,
-                Collections.singleton("https://" + MainActivity.APP_HOST), new DateiBruecke(context));
+                herkuenfte, new DateiBruecke(context));
     }
 
     @Override

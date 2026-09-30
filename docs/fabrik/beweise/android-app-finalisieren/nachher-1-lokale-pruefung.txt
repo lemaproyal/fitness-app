@@ -1,0 +1,9 @@
+Stand: 2026-09-30, Branch codex/feature/android-app-finalisieren.
+
+Ausgeführt im Android-Worktree:
+- Git Bash: bash -n android/test/emulator-test.sh → Exit 0 (Bash-Syntax OK).
+- node werkzeuge/pwa-pruefen.js → „Alles vollständig — die App ist installierbar.“
+- git diff --check → Exit 0; nur Git-Hinweise zur lokalen CRLF-Umwandlung.
+- Lokale Android-Kompilierung nicht möglich: Java/JDK und Android SDK sind hier nicht installiert. Der bestehende Actions-Workflow baut und testet im Emulator; frischer Branch-Lauf folgt.
+
+Der neue Emulator-Schritt lädt den aktuellen Branch-Web-Code über localhost in der Debug-WebView, betätigt den echten Export-Knopf, prüft die JSON-Sicherung und kehrt zur veröffentlichten App zurück. Der Produktions-Build erlaubt localhost nicht.

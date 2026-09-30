@@ -6,10 +6,10 @@
 #
 # Kernfrage: Überleben die Trainingsdaten, wenn Chrome seine Daten löscht?
 #
-# Die App lädt die Live-Seite von GitHub Pages. Schritte, die neuen Web-Code
-# brauchen, prüfen erst, ob er schon live ist, und sagen sonst ausdrücklich
-# „übersprungen“. Mit WEBCODE_PFLICHT=true (auf main, nachdem
-# pages-abwarten.sh den neuen Stand bestätigt hat) ist Überspringen ein Fehler.
+# Die App lädt zunächst die Live-Seite von GitHub Pages. Der echte Export-Knopf
+# des aktuellen Branches wird zusätzlich über den lokalen Entwicklungsserver
+# und adb reverse in derselben Debug-WebView geprüft. Auf main muss auch der
+# neue Web-Code auf GitHub Pages live sein (WEBCODE_PFLICHT=true).
 
 set -euo pipefail
 
@@ -34,10 +34,10 @@ notiz()   { echo "$*" | tee -a "$PROTOKOLL"; }
 bild()    { adb exec-out screencap -p > "$AUS/$1.png"; notiz "Screenshot: $1.png"; }
 fehler()  { notiz "FEHLER: $*"; bild "fehler" || true; exit 1; }
 
-# Bei jedem Abbruch – auch durch set -e ohne fehler() – das Android-Protokoll sichern:
-# Es zeigt, ob und warum die App abgestürzt ist (emulator-lauf.sh wertet es aus).
+# Bei jedem Abbruch – auch durch set -e ohne fehler() – das Android-Protokoll sichern.
 logcat_sichern() {
   local code=$?
+  if [ -n "${server_pid:-}" ]; then kill "$server_pid" 2>/dev/null || true; fi
   if [ "$code" -ne 0 ]; then
     adb logcat -d -b crash > "$AUS/logcat-abstuerze.txt" 2>&1 || true
     adb logcat -d -t 1500 > "$AUS/logcat.txt" 2>&1 || true
@@ -165,6 +165,11 @@ neuer_webcode_live() {
   [ "$(js "try { return (await (await fetch('src/datei.js', { cache: 'no-store' })).text()).includes('dateiAusgeben') } catch { return false }")" = "true" ]
 }
 
+sicherung_datei() {
+  adb shell ls -1 /sdcard/Download/ | tr -d '\r' \
+    | grep -E '^fitness-sicherung-.*\.json$' | head -1 || true
+}
+
 uebersprungen() {
   [ "$WEBCODE_PFLICHT" = "true" ] && fehler "$1 – neuer Web-Code ist nicht live, obwohl er es sein müsste"
   notiz "übersprungen: $1 – Live-Seite noch ohne neuen Web-Code"
@@ -250,19 +255,62 @@ echo "$oben" | grep -qi "documentsui" || fehler "Dateiauswahl hat sich nicht ge�
 adb shell input keyevent KEYCODE_BACK
 sleep 2
 
-schritt "8. Export-Knopf der Web-App"
+schritt "8. Echter Export-Knopf des Branch-Web-Codes in der APK"
 if neuer_webcode_live; then
-  js "document.getElementById('btnExport').click(); return true" > /dev/null || fehler "Export-Knopf nicht gefunden"
+  js "document.getElementById('btnExport').click(); return true" > /dev/null \
+    || fehler "Export-Knopf der Live-Seite ließ sich nicht antippen"
   sleep 3
-  bild "5-export-knopf"
   meldung=$(js "return document.getElementById('meldung').textContent" || true)
-  notiz "Meldung: $meldung"
-  echo "$meldung" | grep -q "in „Downloads“ gespeichert" || fehler "Export-Knopf meldet keinen Erfolg"
-  adb shell ls /sdcard/Download/ | tr -d '\r' | grep -q "^fitness-sicherung-" || fehler "Sicherung fehlt im Download-Ordner"
-  notiz "OK: Sicherung liegt im Download-Ordner"
+  echo "$meldung" | grep -q "in „Downloads“ gespeichert" \
+    || fehler "Live-Seite meldet keinen Export-Erfolg: $meldung"
+  live_datei=$(sicherung_datei)
+  [ -n "$live_datei" ] || fehler "Live-Seite hat keine Sicherung angelegt"
+  adb exec-out cat "/sdcard/Download/$live_datei" | grep -q "$MARKER_ID" \
+    || fehler "Live-Seite hat die Test-Übung nicht exportiert"
+  notiz "OK: Live-Seite exportiert die Test-Übung über die APK-Brücke"
+  adb shell rm -f "/sdcard/Download/$live_datei" > /dev/null
 else
-  uebersprungen "Export-Knopf (die Brücke selbst prüft Schritt 4)"
+  uebersprungen "Export-Knopf der Live-Seite"
 fi
+node server.js > "$AUS/server.log" 2>&1 &
+server_pid=$!
+for _ in $(seq 1 20); do
+  curl -fsS http://localhost:5173/verwaltung.html > /dev/null 2>&1 && break
+  sleep 1
+done
+curl -fsS http://localhost:5173/verwaltung.html > /dev/null || fehler "Branch-Web-Code lokal nicht erreichbar"
+adb reverse tcp:5173 tcp:5173 > /dev/null || fehler "adb reverse gescheitert"
+js "location.href = 'http://localhost:5173/verwaltung.html'; return true" > /dev/null \
+  || fehler "Wechsel zum Branch-Web-Code gescheitert"
+export CDP_SEITE="http://localhost:5173/"
+seite_abwarten "verwaltung.html"
+erwarte "Datei-Brücke auch auf Debug-Testadresse vorhanden" \
+  "$(js 'return typeof window.FitnessAndroid')" '"object"'
+erwarte "aktueller Branch-Web-Code geladen" "$(js 'return !!document.getElementById("btnExport")')" "true"
+js "const db = await import(new URL('src/db.js', location.href).href);
+    await db.uebungen.speichern({ id: '$MARKER_ID', name: '$MARKER_NAME' });
+    document.getElementById('btnExport').click(); return true" > /dev/null \
+  || fehler "Export-Knopf ließ sich nicht antippen"
+dateiname=""
+for _ in $(seq 1 15); do
+  dateiname=$(sicherung_datei)
+  [ -n "$dateiname" ] && break
+  sleep 1
+done
+[ -n "$dateiname" ] || fehler "Sicherung fehlt im Download-Ordner"
+adb exec-out cat "/sdcard/Download/$dateiname" > "$AUS/sicherung-aus-apk.json" \
+  || fehler "Sicherung lässt sich nicht lesen"
+node -e "const s=JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')); if (s.format !== 'fitness-app-sicherung' ||
+  !s.uebungen.some(u => u.id === '$MARKER_ID' && u.name === '$MARKER_NAME')) process.exit(1)" \
+  "$AUS/sicherung-aus-apk.json" || fehler "Export enthält die Test-Übung nicht"
+meldung=$(js "return document.getElementById('meldung').textContent" || true)
+echo "$meldung" | grep -q "in „Downloads“ gespeichert" || fehler "Export-Knopf meldet keinen Erfolg: $meldung"
+notiz "OK: Export-Knopf speichert $dateiname mit Test-Übung; Meldung: $meldung"
+bild "5-export-knopf"
+js "location.href = 'https://lemaproyal.github.io/fitness-app/verwaltung.html'; return true" > /dev/null \
+  || fehler "Rückkehr zur Live-Seite gescheitert"
+unset CDP_SEITE
+seite_abwarten "verwaltung.html"
 
 schritt "9. Wechsel in den Hintergrund erreicht die Seite sofort"
 js "localStorage.setItem('sichtbarkeit', '');

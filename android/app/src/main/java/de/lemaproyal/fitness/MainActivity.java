@@ -44,6 +44,8 @@ public class MainActivity extends Activity {
 
     static final String APP_HOST = "lemaproyal.github.io";
     private static final String START_URL = "https://" + APP_HOST + "/fitness-app/";
+    private static final String TEST_HOST = "localhost";
+    private static final int TEST_PORT = 5173;
     private static final String OFFLINE_SEITE = "file:///android_asset/offline.html";
     private static final int ANFRAGE_DATEIAUSWAHL = 1;
     private static final long NEUER_VERSUCH_NACH_MS = 1500;
@@ -139,6 +141,13 @@ public class MainActivity extends Activity {
         return webView.getUrl() != null && webView.getUrl().startsWith(OFFLINE_SEITE);
     }
 
+    private static boolean eigeneAdresse(Uri ziel) {
+        if (APP_HOST.equals(ziel.getHost()) && "https".equals(ziel.getScheme())) return true;
+        // Nur die Debug-APK darf den aktuellen Branch über adb reverse testen.
+        return BuildConfig.DEBUG && TEST_HOST.equals(ziel.getHost())
+                && "http".equals(ziel.getScheme()) && ziel.getPort() == TEST_PORT;
+    }
+
     @Override
     public void onBackPressed() {
         if (vollbildAnsicht != null) {
@@ -197,7 +206,7 @@ public class MainActivity extends Activity {
             if (!anfrage.isForMainFrame()) return false;
             Uri ziel = anfrage.getUrl();
             String schema = ziel.getScheme();
-            if (APP_HOST.equals(ziel.getHost()) && "https".equals(schema)) return false;
+            if (eigeneAdresse(ziel)) return false;
             // Fremde Webseiten (z. B. „Auf YouTube ansehen“) gehören in den Browser,
             // nicht in die App. Andere Schemata werden gar nicht erst weitergereicht.
             if (!"https".equals(schema) && !"http".equals(schema)) return true;
