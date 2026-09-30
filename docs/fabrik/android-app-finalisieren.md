@@ -27,8 +27,30 @@ Der bisherige Branch `feature/android-apk` bleibt als Ausgangspunkt erhalten.
 
 ## Beweise
 - [Vorher: aktueller Android-Stand](beweise/android-app-finalisieren/vorher-1-ausgangszustand.txt)
+- [Nachher: lokale Syntax- und Web-Prüfung](beweise/android-app-finalisieren/nachher-1-lokale-pruefung.txt)
+
+Der Push von Commit `32802e1` zum öffentlichen Repository wurde am 2026-09-30
+von der automatischen Freigabeprüfung abgelehnt: Die Nutzeranweisung zur
+Implementierung wurde nicht als ausdrückliche Freigabe zur Veröffentlichung
+eines neuen Branches gewertet. Kein alternativer Push wurde versucht. Der
+GitHub-Actions-Emulatorlauf und die echte signierte APK sind dadurch noch offen.
 
 ## Review-Runden
+
+### Runde 1 – 3/5 (unabhängiger Subagent)
+Keine eindeutige Code-Regression im Diff. Offener mittlerer Befund: Der
+Nachher-Beleg enthält keinen aktuellen APK-Build, Manifest-Merge oder
+Emulatorlauf. Die Wirkung des neuen Testablaufs ist daher noch nicht belegt.
+Abhilfe nach Push-Freigabe: GitHub Actions ausführen, `test-ergebnis` prüfen,
+Belege und Kriterien aktualisieren, erneut unabhängig reviewen.
+
+## Übergabe nach Freigabe
+1. Branch `codex/feature/android-app-finalisieren` nach `origin` pushen.
+2. Actions-Lauf „Android-APK“ für genau diesen Commit prüfen und Emulator-Belege
+   für Export, Chrome-Löschung sowie APK-Build im Protokoll verlinken.
+3. Bei bestandenem Review Pull Request von diesem Branch nach `main` erstellen.
+4. Vor Merge die Secrets `SIGNATUR_BASE64` und `SIGNATUR_PASSWORT` hinterlegen
+   (Anleitung `APK.md`); Merge und Release-Abnahme bleiben beim Nutzer.
 
 ## Später
 - Die signierte APK mit dauerhaftem Schlüssel und der Export auf GitHub Pages werden erst nach Hinterlegen der Secrets und Merge auf `main` vollständig belegbar.

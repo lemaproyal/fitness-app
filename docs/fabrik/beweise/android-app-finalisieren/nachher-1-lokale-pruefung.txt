@@ -4,6 +4,7 @@ Ausgeführt im Android-Worktree:
 - Git Bash: bash -n android/test/emulator-test.sh → Exit 0 (Bash-Syntax OK).
 - node werkzeuge/pwa-pruefen.js → „Alles vollständig — die App ist installierbar.“
 - git diff --check → Exit 0; nur Git-Hinweise zur lokalen CRLF-Umwandlung.
+- node server.js → http://localhost:5173/verwaltung.html und /src/datei.js antworten jeweils mit HTTP 200; Export-Knopf und Android-Brücke sind im ausgelieferten Branch-Code vorhanden. Den lokalen Testserver danach beendet.
 - Lokale Android-Kompilierung nicht möglich: Java/JDK und Android SDK sind hier nicht installiert. Der bestehende Actions-Workflow baut und testet im Emulator; frischer Branch-Lauf folgt.
 
-Der neue Emulator-Schritt lädt den aktuellen Branch-Web-Code über localhost in der Debug-WebView, betätigt den echten Export-Knopf, prüft die JSON-Sicherung und kehrt zur veröffentlichten App zurück. Der Produktions-Build erlaubt localhost nicht.
+Der neue Emulator-Schritt soll den aktuellen Branch-Web-Code über localhost in der Debug-WebView laden, den echten Export-Knopf betätigen, die JSON-Sicherung prüfen und zur veröffentlichten App zurückkehren. Die Produktionskonfiguration enthält nach Codeprüfung weder die Debug-Herkunft noch die Debug-Freigabe für HTTP; ein APK-/Manifest-Beleg fehlt bis zum CI-Lauf.
