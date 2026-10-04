@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d4462a">
+<meta name="description" content="Alle absolvierten Trainings — nachschlagen und exportieren.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Verlauf</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --ink: #16181d; --muted: #62676f;
+    --line: #dfe2e7; --accent: #d4462a; --chip: #eef0f3; --gut: #2f7d5e;
+    --tagA: #d4462a; --tagB: #2a6079;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121418; --card: #1c1f25; --ink: #eceef1; --muted: #9aa1ab;
+      --line: #2c313a; --accent: #ff6b47; --chip: #262b33; --gut: #4ea882;
+      --tagA: #ff6b47; --tagB: #4d90b0;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15.5px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: 40px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 14px; }
+
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: max(12px, env(safe-area-inset-top)) 0 12px;
+  }
+  .kopfzeile { display: flex; align-items: center; gap: 10px; }
+  .zurueck {
+    color: var(--muted); text-decoration: none; font-size: 1.25rem;
+    line-height: 1; padding: 3px 7px; border-radius: 6px;
+  }
+  .zurueck:hover { background: var(--chip); color: var(--ink); }
+  h1 { font-size: 1.2rem; margin: 0; letter-spacing: -0.02em; }
+  .kopfzeile .rest { margin-left: auto; font-size: 0.8rem; color: var(--muted); }
+
+  button {
+    font: inherit; cursor: pointer; border: none; border-radius: 9px;
+    padding: 9px 14px; font-weight: 600; background: var(--chip); color: var(--ink);
+  }
+  button:disabled { opacity: 0.45; cursor: default; }
+
+  /* ---------- Export und Filter ---------- */
+  .werkzeuge { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 6px; }
+  .hilfe { font-size: 0.8rem; color: var(--muted); margin: 0 0 18px; }
+
+  .filter { display: flex; gap: 6px; margin-bottom: 14px; }
+  .filter button {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    font-size: 0.83rem; font-weight: 600; padding: 6px 13px; border-radius: 999px;
+  }
+  .filter button[aria-pressed="true"] {
+    background: var(--ink); border-color: var(--ink); color: var(--bg);
+  }
+
+  /* ---------- Einträge ---------- */
+  .einheit {
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 4px solid var(--tagfarbe, var(--line));
+    border-radius: 11px; margin-bottom: 8px; overflow: hidden;
+  }
+  .einheit.offen { border-color: var(--accent); border-left-color: var(--tagfarbe); }
+  .kopf {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 11px 13px; background: none; border: none; border-radius: 0;
+    color: inherit; text-align: left; font-weight: 400;
+  }
+  .kopf .datum { font-weight: 700; font-size: 0.96rem; flex: 0 0 auto; }
+  .kopf .tag {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--tagfarbe);
+  }
+  .kopf .zahlen {
+    margin-left: auto; font-size: 0.8rem; color: var(--muted);
+    font-variant-numeric: tabular-nums; text-align: right;
+  }
+  .kopf .pfeil { flex: 0 0 auto; color: var(--muted); transition: transform 0.15s; }
+  .einheit.offen .pfeil { transform: rotate(90deg); }
+
+  .inhalt { display: none; padding: 0 13px 13px; }
+  .einheit.offen .inhalt { display: block; }
+
+  .uebung-block { margin-bottom: 12px; }
+  .uebung-block h3 {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin: 0 0 5px; font-weight: 600;
+  }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 3px 6px; font-size: 0.9rem; }
+  th {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line);
+  }
+  th:first-child, td:first-child { text-align: left; width: 2.2rem; color: var(--muted); }
+  td { border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+
+  .einheit-notiz {
+    background: var(--chip); border-radius: 9px; padding: 9px 11px;
+    font-size: 0.88rem; white-space: pre-wrap; margin: 4px 0 12px;
+  }
+  .fuss { display: flex; align-items: center; gap: 10px; }
+  .fuss .weg {
+    background: none; color: var(--muted); font-weight: 500;
+    font-size: 0.83rem; padding: 6px 10px;
+  }
+  .fuss .weg:hover { background: var(--chip); color: var(--accent); }
+
+  .leer { text-align: center; color: var(--muted); padding: 44px 20px; }
+  .leer a { color: var(--accent); }
+
+  .meldung {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 16px;
+    border-radius: 999px; font-size: 0.88rem; z-index: 50;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .meldung.an { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kopfzeile">
+      <a href="./" class="zurueck" aria-label="Zur Startseite">←</a>
+      <h1>Verlauf</h1>
+      <span class="rest" id="zusammenfassung"></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="werkzeuge">
+    <button type="button" id="btnCsv">Als CSV</button>
+    <button type="button" id="btnJson">Vollständige Sicherung</button>
+  </div>
+  <p class="hilfe">
+    <b>CSV</b> öffnet sich direkt in Excel oder LibreOffice — eine Zeile je Satz,
+    zum Auswerten. Die <b>Sicherung</b> ist dieselbe JSON-Datei wie unter
+    Einstellungen und die einzige, die sich wieder einlesen lässt.
+  </p>
+
+  <div class="filter" id="filter"></div>
+  <div id="liste"></div>
+</div>
+
+<div class="meldung" id="meldung"></div>
+
+<script type="module" src="./src/verlauf.js"></script>
+</body>
+</html>

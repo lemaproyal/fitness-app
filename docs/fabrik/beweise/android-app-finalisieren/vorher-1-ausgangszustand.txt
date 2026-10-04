@@ -1,0 +1,12 @@
+Stand: 2026-09-30, Worktree .worktrees/android-apk, Branch vor Arbeitsbeginn feature/android-apk, HEAD ed1112d.
+
+Ausführung: git status --short --branch → sauber; origin/feature/android-apk = ed1112d; origin/main = f646de0.
+Vorhandener Beleg: docs/fabrik/beweise/android-apk/emulator/protokoll.txt zeigt den Emulator-Test für Commit 5a781ce.
+Aktueller HEAD ed1112d ändert danach Test-Reset, Neuversuch und WebView-Neuladen; kein gespeicherter Emulator-Beleg dieses HEAD.
+GitHub Actions zum selben HEAD: Run 35757554863 = success; Run 35757569668 = failure im Schritt „Im Android-Emulator prüfen“. Öffentliche Job-Seite zeigt ohne Anmeldung nur Exit-Code 1, nicht das Testprotokoll.
+Der bisherige Test überspringt auf dem Feature-Branch den echten Export-Knopf der APK, weil die Live-Seite noch von main kommt.
+Datei android/test/emulator-lauf.sh wiederholt den gesamten Test bei einem beliebigen passenden GMS-Kill in den letzten 1500 Log-Zeilen.
+GitHub API: keine offenen Pull Requests und kein Release für das Repository.
+Umgebung: kein lokales Android SDK oder JDK; CI baut die APK. Der lokale Signaturschlüssel ist vorhanden; sein SHA-256-Fingerabdruck stimmt mit android/signatur-fingerabdruck.txt überein (ohne Schlüsselmaterial auszugeben).
+
+Reproduktion nachher: aktuellen Branch nach GitHub pushen; Workflow Android-APK auf Branch ausführen; Artefakt test-ergebnis/protokoll.txt und Screenshots prüfen. Zusätzlich node werkzeuge/pwa-pruefen.js für Web-Paket.

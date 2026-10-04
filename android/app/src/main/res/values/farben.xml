@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Aus manifest.webmanifest der Web-App: theme_color und background_color. -->
+    <color name="akzent">#d4462a</color>
+    <color name="hintergrund">#121418</color>
+</resources>

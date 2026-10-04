@@ -11,6 +11,7 @@ import { aufbereiten, aufbereitenLink, schleifeAbspielen,
 import { schnittleisteVerbinden } from "./schnitt.js";
 import { spielerErzeugen } from "./youtube.js";
 import { serviceWorkerAnmelden } from "./pwa.js";
+import { dateiAusgeben, inAndroidApp } from "./datei.js";
 
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? "").replace(/[&<>"']/g, z =>
@@ -46,8 +47,16 @@ const blockFeldAktualisieren = () => {
 };
 
 // Von der Startseite kommend ist der Tag schon vorgewählt: verwaltung.html?tag=A
-const tagAusAdresse = new URLSearchParams(location.search).get("tag");
+// Aus einem leeren Bereich heraus die Kategorie: verwaltung.html?kategorie=warmup.
+// Nach Kategorie und nicht nach Tag, weil Warm-Up, Jump, Core und Exit auf beiden
+// Tagen stehen — ein Tagesfilter würde sie auf dem jeweils anderen wegfiltern.
+const adresse = new URLSearchParams(location.search);
+const tagAusAdresse = adresse.get("tag");
 if (TAGE.some(t => t.id === tagAusAdresse)) $("filterTag").value = tagAusAdresse;
+const kategorieAusAdresse = adresse.get("kategorie");
+if (KATEGORIEN.some(k => k.id === kategorieAusAdresse)) {
+  $("filterKategorie").value = kategorieAusAdresse;
+}
 selectFuellen($("fKategorie"), KATEGORIEN);
 selectFuellen($("fMesstyp"), MESSTYPEN);
 $("equipmentListe").innerHTML = EQUIPMENT.map(e => `<option value="${esc(e)}">`).join("");
@@ -130,7 +139,7 @@ async function statusAktualisieren() {
   $("status").innerHTML =
     `<b>${info.anzahlUebungen}</b> Übungen · <b>${info.anzahlMedien}</b> mit Video · ` +
     `${groesseFormatieren(info.belegtVonMedien)}` +
-    (info.dauerhaft ? " · dauerhaft gespeichert" : "");
+    (info.dauerhaft || inAndroidApp() ? " · dauerhaft gespeichert" : "");
 }
 
 async function neuLaden() {
@@ -451,9 +460,19 @@ async function werkzeugeOeffnen() {
   $("speicherInfo").textContent =
     `${info.anzahlMedien} Videos belegen ${groesseFormatieren(info.belegtVonMedien)}, ` +
     `insgesamt belegt ${groesseFormatieren(info.belegtGesamt)}${anteil}. ` +
-    (info.dauerhaft ? "Dauerhafte Speicherung ist aktiv." : "Dauerhafte Speicherung ist nicht aktiv.");
+    speicherHinweis(info.dauerhaft);
+  // In der Android-App liegen die Daten ohnehin im eigenen Speicher der App; die
+  // Browser-Erlaubnis dort ist bedeutungslos, ihr Rat („zum Startbildschirm
+  // hinzufügen“) führte zurück in den Speicher von Chrome.
+  $("btnPersistent").hidden = inAndroidApp();
+  $("persistentHilfe").hidden = inAndroidApp();
   $("btnPersistent").disabled = info.dauerhaft;
   $("dlgMehr").showModal();
+}
+
+function speicherHinweis(dauerhaft) {
+  if (inAndroidApp()) return "Die Daten liegen im eigenen Speicher der App.";
+  return dauerhaft ? "Dauerhafte Speicherung ist aktiv." : "Dauerhafte Speicherung ist nicht aktiv.";
 }
 
 async function seedLaden() {
@@ -471,13 +490,9 @@ async function seedLaden() {
 
 async function exportDatei() {
   const daten = await exportieren();
-  const blob = new Blob([JSON.stringify(daten, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `fitness-sicherung-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  melden("Sicherung heruntergeladen.");
+  melden(await dateiAusgeben("Sicherung",
+                             `fitness-sicherung-${new Date().toISOString().slice(0, 10)}.json`,
+                             JSON.stringify(daten, null, 2), "application/json"));
 }
 
 async function importDatei(datei) {

@@ -1,7 +1,12 @@
 # Die App aufs Handy bringen
 
-Ohne Play Store, ohne APK, ohne Android Studio. Der Weg führt über GitHub Pages:
+Ohne Play Store, ohne Android Studio. Der Weg führt über GitHub Pages:
 Dateien hochladen, Adresse am Handy öffnen, zum Startbildschirm hinzufügen.
+
+Besser ist inzwischen die Android-App (APK) aus `APK.md`: Sie lädt dieselbe Seite,
+hält die Daten aber im eigenen Speicher der App, wo „Browserdaten löschen“ in
+Chrome sie nicht erreicht. Das Hochladen hier bleibt trotzdem nötig, denn die
+APK holt ihren Programmcode von GitHub Pages.
 
 ## Warum überhaupt hochladen?
 
@@ -17,6 +22,8 @@ danach nur noch für Aktualisierungen gebraucht.
 
 ```
 index.html
+training.html
+verlauf.html
 verwaltung.html
 manifest.webmanifest
 sw.js
@@ -24,6 +31,9 @@ sw.js
 src/          (alle .js-Dateien)
 icons/        (alle .png-Dateien)
 ```
+
+Genau diese Liste stellt `node werkzeuge/paket-bauen.js` im Ordner
+`veroeffentlichen/` zusammen — von Hand zusammensuchen muss man sie nicht.
 
 **Nicht** nötig: `server.js`, `Fitness starten.bat`, `werkzeuge/`, `demo/`,
 `data/`, `.claude/`. Die stören nicht, gehören aber nicht zur App.

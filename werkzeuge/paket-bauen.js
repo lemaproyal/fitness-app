@@ -14,7 +14,8 @@ const path = require("node:path");
 const WURZEL = path.join(__dirname, "..");
 const ZIEL = path.join(WURZEL, "veroeffentlichen");
 
-const EINZELDATEIEN = ["index.html", "verwaltung.html", "manifest.webmanifest", "sw.js", ".nojekyll"];
+const EINZELDATEIEN = ["index.html", "verwaltung.html", "training.html", "verlauf.html",
+                       "manifest.webmanifest", "sw.js", ".nojekyll"];
 const ORDNER = [
   { name: "src", endung: ".js" },
   { name: "icons", endung: ".png" },
@@ -54,11 +55,28 @@ for (const { name, endung } of ORDNER) {
   }
 }
 
+const swQuelltext = fs.readFileSync(path.join(WURZEL, "sw.js"), "utf8");
+
 // Version des Service Workers mit ausgeben — der häufigste vergessene Schritt.
-const version = fs.readFileSync(path.join(WURZEL, "sw.js"), "utf8")
-  .match(/const VERSION = "([^"]+)"/)?.[1] ?? "unbekannt";
+const version = swQuelltext.match(/const VERSION = "([^"]+)"/)?.[1] ?? "unbekannt";
 
 console.log(`\n  ${anzahl} Dateien, ${(bytes / 1024).toFixed(0)} KB gesamt`);
 console.log(`  Service-Worker-Version: ${version}`);
+
+// Gegenprobe: Alles, was der Service Worker offline vorhalten will, muss auch
+// im Paket liegen. Sonst fehlt die Datei still auf dem Server — beim Hochladen
+// über die GitHub-Oberfläche bleibt dort einfach der alte Stand stehen, und man
+// sucht den Fehler tagelang in der App.
+const vorgemerkt = (swQuelltext.match(/const SCHALE = \[([\s\S]*?)\]/)?.[1] ?? "")
+  .match(/"\.\/([^"]*)"/g)?.map(t => t.slice(3, -1)).filter(Boolean) ?? [];
+
+const fehlend = vorgemerkt.filter(p => !fs.existsSync(path.join(ZIEL, p)));
+if (fehlend.length) {
+  console.log(`\n  ACHTUNG: ${fehlend.length} vom Service Worker vorgemerkte Datei(en) fehlen im Paket:`);
+  for (const p of fehlend) console.log(`    - ${p}`);
+  console.log(`  In werkzeuge/paket-bauen.js unter EINZELDATEIEN oder ORDNER ergänzen.`);
+  process.exitCode = 1;
+}
+
 console.log(`\n  Fertig: ${ZIEL}`);
 console.log(`  Beim Hochladen den INHALT dieses Ordners auswählen, nicht den Ordner selbst.\n`);

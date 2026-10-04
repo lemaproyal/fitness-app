@@ -1,0 +1,45 @@
+{
+  "format": "fitness-app-sicherung",
+  "version": 1,
+  "erstelltAm": "2026-09-30T12:11:33.414Z",
+  "hinweis": "Alle Videos sind verlinkt und vollständig enthalten.",
+  "uebungen": [
+    {
+      "id": "emulator-test",
+      "name": "Emulator-Test Übung",
+      "nameKlein": "emulator-test übung",
+      "nameAlt": [],
+      "kategorie": null,
+      "tag": null,
+      "level": "mittel",
+      "messtyp": "gewicht-wdh",
+      "equipment": [],
+      "unilateral": false,
+      "block": null,
+      "muskelnPrimaer": [],
+      "muskelnSekundaer": [],
+      "ausfuehrung": [],
+      "hinweise": [],
+      "fehler": [],
+      "standard": {
+        "saetze": 3,
+        "wiederholungen": 10,
+        "gewichtKg": null,
+        "dauerSek": null,
+        "pauseSek": 90
+      },
+      "medienId": null,
+      "animation": null,
+      "notizen": "",
+      "favorit": 0,
+      "aktiv": true,
+      "erstelltAm": "2026-09-30T12:11:33.403Z",
+      "geaendertAm": "2026-09-30T12:11:33.403Z"
+    }
+  ],
+  "workouts": [],
+  "protokoll": [],
+  "medien": [],
+  "medienMetadaten": [],
+  "einstellungen": []
+}

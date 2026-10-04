@@ -1,0 +1,4 @@
+Run: https://github.com/lemaproyal/fitness-app/actions/runs/36712856840
+Versuch 2, 2026-09-30. Der Emulator-Test bestand den Export mit aktuellem Branch-Web-Code und die Chrome-Datenloeschung; Schritt 11 scheiterte, nachdem Android den App-Prozess beendete.
+Gefilterte ActivityManager-Zeile aus logcat.txt des CI-Artefakts:
+09-30 12:24:52.108   518  1832 I ActivityManager: Killing 5295:de.lemaproyal.fitness.test/u0a192 (adj 0): depends on provider com.google.android.gms/.fonts.provider.FontsProvider in dying proc com.google.android.gms.persistent (adj -10000)

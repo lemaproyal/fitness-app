@@ -1,0 +1,72 @@
+== 0. Warten, bis der Emulator Internet hat
+online nach 1 Versuch(en)
+== 1. APK installieren und starten
+Performing Streamed Install
+Success
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity
+TotalTime: 5066
+WaitTime: 5069
+Complete
+Adresse: "https://lemaproyal.github.io/fitness-app/"
+Titel:   "Fitness"
+Screenshot: 1-start.png
+übersprungen: Installationshinweis – Live-Seite noch ohne neuen Web-Code
+== 2. Datei-Brücke auf der eigenen Adresse vorhanden
+OK: window.FitnessAndroid vorhanden
+== 3. Übung als Markierung speichern
+OK: Übung gespeichert
+== 4. Export über die Brücke: Datei im Download-Ordner, Antwort an die Seite
+OK: Antwort der App
+total 8
+-rwxrwx--- 1 u0_a183 media_rw 13 2026-09-30 12:23 fitness-emulator-test.json
+OK: Dateiinhalt
+== 5. Bestätigungsdialog (confirm) mit OK
+Screenshot: 2-dialog.png
+OK: confirm() liefert nach OK true
+== 6. YouTube-Video eingebettet, ohne Zugriff auf die Brücke
+Screenshot: 3-youtube.png
+OK: Brücke im YouTube-iframe nicht sichtbar
+== 7. Dateiauswahl für den Import
+Screenshot: 4-dateiauswahl.png
+Vorderste Ansicht:     topResumedActivity=ActivityRecord{3a3125d u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity t8}
+== 8. Echter Export-Knopf des Branch-Web-Codes in der APK
+übersprungen: Export-Knopf der Live-Seite – Live-Seite noch ohne neuen Web-Code
+OK: Datei-Brücke auch auf Debug-Testadresse vorhanden
+OK: aktueller Branch-Web-Code geladen
+OK: Export-Knopf speichert fitness-sicherung-2026-09-30.json mit Test-Übung; Meldung: "Sicherung in „Downloads“ gespeichert (fitness-sicherung-2026-09-30.json)."
+Screenshot: 5-export-knopf.png
+== 9. Wechsel in den Hintergrund erreicht die Seite sofort
+OK: dieselbe Seite wie vor dem Wechsel
+OK: visibilitychange: hidden, dann visible
+== 10. Chrome-Daten löschen, App neu starten
+Speicherort der App-Datenbank (privat, nur für diese App):
+Cookies
+Cookies-journal
+IndexedDB
+Local Storage
+Service Worker
+Session Storage
+VideoDecodeStats
+Web Data
+Web Data-journal
+WebStorage
+blob_storage
+databases
+shared_proto_db
+pm clear com.android.chrome: Success
+Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: de.lemaproyal.fitness.test/de.lemaproyal.fitness.MainActivity
+TotalTime: 2616
+WaitTime: 2629
+Complete
+OK: Markierung nach dem Löschen der Chrome-Daten noch da
+Screenshot: 6-nach-chrome-loeschen.png
+(Die Startseite zählt die Markierung nicht mit – sie hat keinen Trainingstag. Beweis ist die Zeile darüber.)
+== 11. Absturz der Darstellung: App baut sich neu auf, statt sich zu schließen
+FEHLER: App-Prozess läuft weiter – erwartet 5295, erhalten (nichts)
+Screenshot: fehler.png

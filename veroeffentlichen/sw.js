@@ -12,7 +12,7 @@
  * Sonst behalten bereits installierte Geräte den alten Stand.
  */
 
-const VERSION = "v11";
+const VERSION = "v16";
 const CACHE = `fitness-${VERSION}`;
 
 // Alles, was die App zum Starten braucht. Relative Pfade, damit es auch in einem
@@ -22,6 +22,7 @@ const SCHALE = [
   "./index.html",
   "./verwaltung.html",
   "./training.html",
+  "./verlauf.html",
   "./manifest.webmanifest",
   "./src/db.js",
   "./src/stammdaten.js",
@@ -30,8 +31,10 @@ const SCHALE = [
   "./src/youtube.js",
   "./src/verwaltung.js",
   "./src/training.js",
+  "./src/verlauf.js",
   "./src/start.js",
   "./src/pwa.js",
+  "./src/datei.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-maskierbar-512.png",

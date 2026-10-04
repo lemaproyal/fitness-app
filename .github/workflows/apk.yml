@@ -1,0 +1,155 @@
+# Baut die Android-App (Ordner android/), prüft sie im Emulator und
+# veröffentlicht sie auf main als Release „apk“ – direkt am Handy ladbar unter
+# https://github.com/lemaproyal/fitness-app/releases/download/apk/fitness.apk
+#
+# Am Rechner braucht es dafür weder Java noch Android SDK.
+
+name: Android-APK
+
+on:
+  push:
+    branches: ["**"]   # keine Läufe für Tags
+    paths:
+      - "android/**"
+      - ".github/workflows/apk.yml"
+  workflow_dispatch:
+
+# Nie zwei Läufe desselben Branches gleichzeitig: Sonst könnte ein älterer Lauf
+# nach einem neueren veröffentlichen.
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      echt-signiert: ${{ steps.signiert.outputs.echt }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Die Versionsnummer der APK ist die Zahl der Commits (app/build.gradle).
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      # Node 22 bringt WebSocket mit – den braucht android/test/cdp.mjs.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Test-APK bauen
+        run: gradle -p android assembleDebug
+
+      - name: Emulator-Beschleunigung (KVM) freigeben
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Auf main muss der Test den neuen Web-Code sehen (Export-Knopf, Installationshinweis) –
+      # also erst warten, bis GitHub Pages diesen Commit ausliefert.
+      - name: Auf GitHub Pages warten
+        if: github.ref == 'refs/heads/main'
+        run: bash android/test/pages-abwarten.sh
+
+      - name: Im Android-Emulator prüfen
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          WEBCODE_PFLICHT: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          # Feste DNS-Server: Mit dem Standard konnte der Emulator direkt nach dem Start
+          # gelegentlich keine Namen auflösen (ERR_NAME_NOT_RESOLVED).
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -dns-server 8.8.8.8,1.1.1.1
+          script: bash android/test/emulator-lauf.sh android/app/build/outputs/apk/debug/app-debug.apk test-ergebnis
+
+      - name: Test-Screenshots aufheben
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-ergebnis
+          path: test-ergebnis
+
+      # Ohne hinterlegten Schlüssel wird mit einem Wegwerf-Schlüssel gebaut: So ist
+      # der Weg zur signierten APK bei jedem Lauf geprüft, veröffentlicht wird dann nichts.
+      - name: Signierte APK bauen und prüfen
+        id: signiert
+        shell: bash   # mit pipefail: sonst verdeckt tee einen Fehler von apksigner
+        env:
+          SIGNATUR_BASE64: ${{ secrets.SIGNATUR_BASE64 }}
+          SIGNATUR_PASSWORT: ${{ secrets.SIGNATUR_PASSWORT }}
+        run: |
+          export SIGNATUR_DATEI="$RUNNER_TEMP/signatur.p12"
+          if [ -n "$SIGNATUR_BASE64" ]; then
+            # Zeilenumbrüche (auch Windows-CR) aus dem eingefügten Secret entfernen.
+            printf '%s' "$SIGNATUR_BASE64" | tr -d '\r\n ' | base64 -d > "$SIGNATUR_DATEI"
+            echo "echt=ja" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Kein Signaturschlüssel hinterlegt (siehe APK.md) – Probelauf mit Wegwerf-Schlüssel, nichts wird veröffentlicht."
+            export SIGNATUR_PASSWORT="wegwerf-$GITHUB_RUN_ID"
+            keytool -genkeypair -keystore "$SIGNATUR_DATEI" -storetype pkcs12 -alias fitness \
+              -keyalg RSA -keysize 2048 -validity 1 -dname "CN=Wegwerf" \
+              -storepass "$SIGNATUR_PASSWORT" -keypass "$SIGNATUR_PASSWORT"
+          fi
+          gradle -p android assembleRelease
+          cp android/app/build/outputs/apk/release/app-release.apk fitness.apk
+
+          werkzeuge="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$werkzeuge/apksigner" verify --print-certs fitness.apk | tee zertifikat.txt
+          if [ -n "$SIGNATUR_BASE64" ]; then
+            # Ein versehentlich getauschtes Secret ergäbe eine APK, die sich nicht über die
+            # installierte legen lässt – Update nur mit Deinstallation, also Datenverlust.
+            erwartet=$(tr -d '[:space:]' < android/signatur-fingerabdruck.txt)
+            [[ "$erwartet" =~ ^[0-9a-f]{64}$ ]] \
+              || { echo "::error::android/signatur-fingerabdruck.txt enthält keinen gültigen Fingerabdruck"; exit 1; }
+            grep -qE "SHA-256 digest: ${erwartet}$" zertifikat.txt \
+              || { echo "::error::Signaturschlüssel passt nicht zu android/signatur-fingerabdruck.txt"; exit 1; }
+          fi
+
+      # Nur von main: Eine echt signierte APK aus einem Branch hätte womöglich eine höhere
+      # Versionsnummer als main – danach ginge ein Update nur noch per Deinstallation.
+      - name: Signierte APK aufheben
+        if: steps.signiert.outputs.echt == 'ja' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v5
+        with:
+          name: fitness-apk
+          path: fitness.apk
+
+  veroeffentlichen:
+    needs: bauen
+    if: needs.bauen.outputs.echt-signiert == 'ja' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Schreibrechte nur hier, nicht im Job, der Fremd-Actions und Live-Webinhalte ausführt.
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: fitness-apk
+
+      # Das Release bleibt bestehen, nur die Datei wird ersetzt – die Download-Adresse
+      # ist höchstens für die Sekunden des Hochladens nicht erreichbar.
+      - name: Als Release „apk“ veröffentlichen
+        run: |
+          gh release view apk > /dev/null 2>&1 \
+            || gh release create apk --target "$GITHUB_SHA" --title "Fitness-App für Android" --notes "Wird eingerichtet."
+          gh release upload apk fitness.apk --clobber
+          gh release edit apk --notes "Stand: Commit ${GITHUB_SHA::7} vom $(date +%F). Am Handy fitness.apk laden und öffnen – Anleitung in APK.md."

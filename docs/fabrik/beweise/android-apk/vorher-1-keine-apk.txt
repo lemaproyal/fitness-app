@@ -1,0 +1,13 @@
+== Vorher-Zustand 2026-09-22T13:35:23+02:00 ==
+--- Gibt es ein Android-Projekt oder einen APK-Build?
+ls: cannot access 'android': No such file or directory
+ls: cannot access '.github': No such file or directory
+--- Workflows im GitHub-Repository:
+(keine)
+--- Wo liegen die Daten? (src/db.js)
+12:const DB_NAME = "fitness";
+29:    const req = indexedDB.open(DB_NAME, DB_VERSION);
+--- Export der Sicherung (nur Browser-Download über Blob-Link):
+src/verlauf.js:148:  a.download = dateiname;
+src/verwaltung.js:485:  a.download = `fitness-sicherung-${new Date().toISOString().slice(0, 10)}.json`;
+--- Folge: Daten liegen im Speicher von Chrome für lemaproyal.github.io. 'Browserdaten löschen -> Cookies und Websitedaten' löscht sie (vom Nutzer am 2026-09-22 so erlebt).

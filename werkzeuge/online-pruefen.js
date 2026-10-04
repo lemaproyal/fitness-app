@@ -43,7 +43,7 @@ async function holen(datei) {
   if (lokal === online) {
     // Zusätzlich stichprobenartig prüfen, ob auch der Code selbst aktuell ist:
     // die Version kann stimmen, während eine Datei noch fehlt.
-    const seiten = ["index.html", "training.html", "verwaltung.html"];
+    const seiten = ["index.html", "training.html", "verwaltung.html", "verlauf.html"];
     const fehlend = [];
     for (const seite of seiten) {
       try { await holen(seite); } catch { fehlend.push(seite); }
