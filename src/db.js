@@ -556,6 +556,14 @@ export async function importieren(sicherung, { ersetzen = false } = {}) {
   await uebungen.vieleSpeichern((sicherung.uebungen ?? []).map(u => ({ ...u, medienId: null })));
   for (const w of sicherung.workouts ?? []) await workouts.speichern(w);
 
+  // Absolvierte Trainings unverändert übernehmen (gleiche id = derselbe Eintrag,
+  // doppeltes Einspielen legt sie also nicht mehrfach an).
+  const einheiten = (sicherung.protokoll ?? []).filter(e => e?.id);
+  if (einheiten.length) {
+    await transaktion("protokoll", "readwrite", s =>
+      Promise.all(einheiten.map(e => anfrage(s.put(e)))));
+  }
+
   let videos = 0, ohneDatei = 0;
   for (const m of sicherung.medien ?? sicherung.medienMetadaten ?? []) {
     // Ohne Blob lässt sich ein Dateivideo nicht wiederherstellen — nur Links.
@@ -586,6 +594,7 @@ export async function importieren(sicherung, { ersetzen = false } = {}) {
   return {
     uebungen: (sicherung.uebungen ?? []).length,
     workouts: (sicherung.workouts ?? []).length,
+    trainings: einheiten.length,
     videos,
     ohneDatei,
     einstellungen: werte,
