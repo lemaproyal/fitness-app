@@ -504,6 +504,7 @@ async function importDatei(datei) {
     $("dlgMehr").close();
     await neuLaden();
     melden(`${ergebnis.uebungen} Übungen, ${ergebnis.videos} Videos importiert.`
+      + (ergebnis.trainings ? ` ${ergebnis.trainings} Trainings übernommen.` : "")
       + (ergebnis.einstellungen ? " Auswahl übernommen." : "")
       + (ergebnis.ohneDatei ? ` ${ergebnis.ohneDatei} Videodatei(en) fehlen.` : ""));
   } catch (fehler) {
