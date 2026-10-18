@@ -1,6 +1,6 @@
 # Fitness-App — Projektübersicht
 
-Alles Wesentliche aus der Entwicklung an einer Stelle. Stand: Service-Worker-Version `v16`.
+Alles Wesentliche aus der Entwicklung an einer Stelle. Stand: Service-Worker-Version `v17`.
 
 - **App:** https://lemaproyal.github.io/fitness-app/
 - **Code bei GitHub:** https://github.com/lemaproyal/fitness-app
