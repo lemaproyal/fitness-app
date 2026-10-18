@@ -12,3 +12,12 @@ signatur/
 *.pem
 passwort.txt
 signatur-base64.txt
+
+# Projektgedächtnis – bleibt lokal, niemals ins öffentliche Repository
+# Dieses Repository ist öffentlich (nötig für GitHub Pages im kostenlosen Tarif);
+# hochgeladen wird nur Programmcode. CLAUDE.md und wissen/ enthalten persönliche
+# Angaben – unter anderem einen Abschnitt zu körperlichen Einschränkungen – und
+# den Ablageort des APK-Signaturschlüssels. Gesichert werden sie über die
+# Nachtsicherung des PCs, nicht über Git. Festgelegt am 19.10.2026.
+CLAUDE.md
+wissen/
